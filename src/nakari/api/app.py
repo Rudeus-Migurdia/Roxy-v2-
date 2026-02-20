@@ -1,0 +1,128 @@
+"""FastAPI application for nakari Live2D frontend.
+
+Provides HTTP and WebSocket API endpoints for the Live2D frontend.
+"""
+
+from __future__ import annotations
+
+import asyncio
+from contextlib import asynccontextmanager
+from typing import AsyncIterator
+
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
+import structlog
+
+from nakari.api.routes import router
+from nakari.api.websocket import WebSocketManager
+
+_log = structlog.get_logger("api_app")
+
+
+# Global WebSocket manager instance
+ws_manager = WebSocketManager()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Application lifespan manager."""
+    _log.info("api_starting")
+    yield
+    _log.info("api_shutting_down")
+    await ws_manager.close_all()
+
+
+def create_app() -> FastAPI:
+    """Create and configure the FastAPI application.
+
+    Returns:
+        Configured FastAPI application
+    """
+    app = FastAPI(
+        title="nakari Live2D API",
+        description="API for nakari Live2D virtual avatar frontend",
+        version="1.0.0",
+        lifespan=lifespan,
+    )
+
+    # CORS middleware
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],  # Configure appropriately for production
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    # Include routes
+    app.include_router(router, prefix="/api")
+
+    # Store ws_manager in app state for access in routes
+    app.state.ws_manager = ws_manager
+
+    @app.get("/")
+    async def root() -> dict[str, str]:
+        """Root endpoint."""
+        return {"message": "nakari Live2D API", "status": "running"}
+
+    @app.get("/health")
+    async def health() -> dict[str, object]:
+        """Health check endpoint."""
+        return {
+            "status": "ok",
+            "version": "1.0.0",
+            "uptime": asyncio.get_event_loop().time(),
+            "connections": ws_manager.connection_count,
+            "websocket_url": "ws://localhost:8000/api/ws",
+        }
+
+    @app.websocket("/api/ws")
+    async def websocket_endpoint(websocket: WebSocket) -> None:
+        """WebSocket endpoint for real-time communication.
+
+        Query parameters:
+            client_id: Optional client identifier (auto-generated if not provided)
+        """
+        # Generate client ID if not provided
+        client_id = websocket.query_params.get("client_id", f"client_{asyncio.get_event_loop().time():.0f}")
+
+        await ws_manager.connect(client_id, websocket)
+
+        try:
+            while True:
+                # Receive and process messages
+                data = await websocket.receive()
+
+                if "text" in data:
+                    # Message will be handled by the input adapter
+                    # For now, just echo for testing
+                    await websocket.send_json(
+                        {
+                            "version": "1.0",
+                            "type": "echo",
+                            "timestamp": asyncio.get_event_loop().time(),
+                            "payload": {"received": data["text"]},
+                        }
+                    )
+
+                elif "bytes" in data:
+                    # Binary data (audio chunks)
+                    _log.debug("received_binary", bytes=len(data["bytes"]))
+
+        except WebSocketDisconnect:
+            _log.info("websocket_disconnected", client_id=client_id)
+        except Exception as e:
+            _log.error("websocket_error", client_id=client_id, error=str(e), exc_info=True)
+        finally:
+            ws_manager.disconnect(client_id)
+
+    return app
+
+
+def get_ws_manager() -> WebSocketManager:
+    """Get the global WebSocket manager instance.
+
+    Returns:
+        WebSocketManager instance
+    """
+    return ws_manager

@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip3 show:*)",
+      "Bash(pip3 --version:*)",
+      "Bash(uv:*)",
+      "Bash(python3:*)",
+      "Bash(source:*)",
+      "Bash(python -c:*)"
+    ]
+  }
+}

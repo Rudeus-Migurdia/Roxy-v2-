@@ -1,0 +1,45 @@
+services:
+  neo4j:
+    image: neo4j:5
+    container_name: nakari-neo4j
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      - NEO4J_AUTH=neo4j/nakari-dev
+      - NEO4J_server_memory_heap_initial__size=256m
+      - NEO4J_server_memory_heap_max__size=512m
+      - NEO4J_server_memory_pagecache_size=128m
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    restart: unless-stopped
+
+  gptsov:
+    image: ${GPTSOV_IMAGE:-rvcboss/gpt-sovits:latest}
+    container_name: nakari-gptsov
+    ports:
+      - "9880:9880"
+      - "9871:9871"
+      - "9872:9872"
+      - "9873:9873"
+      - "9874:9874"
+    environment:
+      - is_half=${GPTSOV_IS_HALF:-False}
+    volumes:
+      - gptsov_output:/workspace/output
+      - gptsov_ref_audio:/workspace/ref_audio
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: ${GPTSOV_GPU_TYPE:-nvidia}
+              count: ${GPTSOV_GPU_COUNT:-all}
+              capabilities: [gpu]
+    restart: unless-stopped
+
+volumes:
+  neo4j_data:
+  neo4j_logs:
+  gptsov_output:
+  gptsov_ref_audio:
