@@ -14,7 +14,7 @@ const getApiUrl = (): string => {
   // Default: connect to localhost nakari API
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const host = import.meta.env.VITE_API_HOST || 'localhost';
-  const port = import.meta.env.VITE_API_PORT || '8002';
+  const port = import.meta.env.VITE_API_PORT || '8000';
 
   return `${protocol}//${host}:${port}/api/ws`;
 };

@@ -69,6 +69,7 @@ async def run() -> None:
     multi_output_handler = None
     state_emitter = None
     ws_input = None
+    shutdown_event = asyncio.Event()
 
     if config.api_enabled:
         from nakari.api import get_ws_manager, run_api_server
@@ -82,8 +83,16 @@ async def run() -> None:
 
         log.info("live2d_api_enabled", host=config.api_host, port=config.api_port)
 
-        # Get WebSocket manager
-        ws_manager: WebSocketManager = get_ws_manager()
+        # Create shutdown callback for auto-shutdown on last client disconnect
+        async def on_last_client_disconnect() -> None:
+            if config.auto_shutdown_on_disconnect:
+                log.info("last_client_disconnected_initiating_shutdown")
+                shutdown_event.set()
+
+        # Get WebSocket manager with shutdown callback
+        ws_manager: WebSocketManager = get_ws_manager(
+            on_last_client_disconnect=on_last_client_disconnect
+        )
 
         # Create multi-output handler
         multi_output_handler = MultiOutputHandler()
@@ -137,6 +146,14 @@ async def run() -> None:
 
     try:
         async with asyncio.TaskGroup() as tg:
+            # Create a task that waits for shutdown event
+            async def wait_for_shutdown() -> None:
+                await shutdown_event.wait()
+                log.info("shutdown_event_triggered_canceling_tasks")
+                # Cancel all tasks by raising SystemExit in the TaskGroup
+                raise SystemExit("Auto-shutdown triggered")
+
+            tg.create_task(wait_for_shutdown(), name="shutdown_watcher")
             tg.create_task(react_loop.run(), name="react_loop")
             tg.create_task(cli.input_loop(), name="cli_input")
             tg.create_task(

@@ -20,6 +20,7 @@
 - **定时任务**: 可设置定时提醒
 - **网页搜索**: 集成 Tavily API 进行网络搜索
 - **上下文压缩**: 智能管理对话上下文长度
+- **自动退出**: 关闭浏览器时自动退出后端
 
 ## 安装
 
@@ -46,6 +47,7 @@ OPENAI_API_KEY=your_api_key
 NAKARI_API_ENABLED=true          # 启用 Live2D API
 NAKARI_API_HOST=127.0.0.1
 NAKARI_API_PORT=8000
+AUTO_SHUTDOWN_ON_DISCONNECT=true  # 关闭浏览器时自动退出后端
 NEO4J_URI=bolt://localhost:7687
 NEO4J_USER=neo4j
 NEO4J_PASSWORD=your_password
@@ -65,12 +67,13 @@ npm run dev
 
 ## 更新日志
 
+### v2.0.1 (2025-02-21)
+- 新增自动退出功能：关闭浏览器时后端自动退出
+- 新增 `AUTO_SHUTDOWN_ON_DISCONNECT` 配置选项
+- 改进启动流程和错误处理
+
 ### v2.0.0 (2025-02-21)
-- 重构为永久 ReAct 循环架构
-- 新增邮箱事件系统
 - 新增 Live2D 前端集成
 - 新增 WebSocket API
-- 新增记忆系统和上下文压缩
 - 修复前后端连接问题
-- 改进启动流程和错误处理
-```
+

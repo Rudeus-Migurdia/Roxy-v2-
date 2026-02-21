@@ -7,7 +7,7 @@ following nakari's async architecture.
 from __future__ import annotations
 
 import asyncio
-from typing import Dict, Set
+from typing import Awaitable, Callable, Dict, Set
 
 import structlog
 from fastapi import WebSocket
@@ -23,11 +23,16 @@ class WebSocketManager:
     message filtering.
     """
 
-    def __init__(self) -> None:
-        """Initialize the WebSocket manager."""
+    def __init__(self, on_last_client_disconnect: Callable[[], Awaitable[None]] | None = None) -> None:
+        """Initialize the WebSocket manager.
+
+        Args:
+            on_last_client_disconnect: Optional callback invoked when the last client disconnects
+        """
         self._connections: Dict[str, WebSocket] = {}
         self._client_ids: Dict[WebSocket, str] = {}
         self._subscribers: Dict[str, Set[str]] = {}
+        self._on_last_client_disconnect = on_last_client_disconnect
         self._log = _log
 
     async def connect(self, client_id: str, ws: WebSocket) -> None:
@@ -70,7 +75,13 @@ class WebSocketManager:
         for topic, subscribers in self._subscribers.items():
             subscribers.discard(client_id)
 
-        self._log.info("client_disconnected", client_id=client_id, remaining=len(self._connections))
+        remaining = len(self._connections)
+        self._log.info("client_disconnected", client_id=client_id, remaining=remaining)
+
+        # Trigger callback if this was the last client
+        if remaining == 0 and self._on_last_client_disconnect:
+            self._log.info("last_client_disconnected", callback="on_last_client_disconnect")
+            asyncio.create_task(self._on_last_client_disconnect())
 
     async def send(self, client_id: str, message: dict) -> bool:
         """Send a message to a specific client.

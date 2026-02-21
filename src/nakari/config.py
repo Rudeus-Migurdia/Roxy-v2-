@@ -96,6 +96,7 @@ class Config:
     api_enabled: bool
     api_host: str
     api_port: int
+    auto_shutdown_on_disconnect: bool
 
     @classmethod
     def from_env(cls) -> Config:
@@ -132,4 +133,5 @@ class Config:
             api_enabled=os.getenv("NAKARI_API_ENABLED", "false").lower() == "true",
             api_host=os.getenv("NAKARI_API_HOST", "127.0.0.1"),
             api_port=safe_int(os.getenv("NAKARI_API_PORT"), 8000, min_value=1, max_value=65535),
+            auto_shutdown_on_disconnect=os.getenv("AUTO_SHUTDOWN_ON_DISCONNECT", "true").lower() == "true",
         )

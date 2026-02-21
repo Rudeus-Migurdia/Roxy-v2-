@@ -8,7 +8,7 @@ from __future__ import annotations
 import asyncio
 import os
 from contextlib import asynccontextmanager
-from typing import AsyncIterator
+from typing import AsyncIterator, Awaitable, Callable
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,7 +21,7 @@ _log = structlog.get_logger("api_app")
 
 
 # Global WebSocket manager instance
-ws_manager = WebSocketManager()
+ws_manager: WebSocketManager | None = None
 
 # Global WebSocket input handler (set by main)
 ws_input = None
@@ -33,7 +33,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     _log.info("api_starting")
     yield
     _log.info("api_shutting_down")
-    await ws_manager.close_all()
+    if ws_manager:
+        await ws_manager.close_all()
 
 
 def create_app() -> FastAPI:
@@ -102,7 +103,7 @@ def create_app() -> FastAPI:
             "status": "ok",
             "version": "1.0.0",
             "uptime": asyncio.get_event_loop().time(),
-            "connections": ws_manager.connection_count,
+            "connections": ws_manager.connection_count if ws_manager else 0,
             "websocket_url": "ws://localhost:8000/api/ws",
         }
 
@@ -113,6 +114,10 @@ def create_app() -> FastAPI:
         Query parameters:
             client_id: Optional client identifier (auto-generated if not provided)
         """
+        if ws_manager is None:
+            await websocket.close(code=1011, reason="Server not initialized")
+            return
+
         # Generate client ID if not provided
         client_id = websocket.query_params.get("client_id", f"client_{asyncio.get_event_loop().time():.0f}")
 
@@ -144,10 +149,16 @@ def create_app() -> FastAPI:
     return app
 
 
-def get_ws_manager() -> WebSocketManager:
+def get_ws_manager(on_last_client_disconnect: Callable[[], Awaitable[None]] | None = None) -> WebSocketManager:
     """Get the global WebSocket manager instance.
+
+    Args:
+        on_last_client_disconnect: Optional callback when last client disconnects
 
     Returns:
         WebSocketManager instance
     """
+    global ws_manager
+    if ws_manager is None:
+        ws_manager = WebSocketManager(on_last_client_disconnect=on_last_client_disconnect)
     return ws_manager
