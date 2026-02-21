@@ -148,3 +148,12 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Frontend - Live2D library files (use CDN or npm)
+frontend/public/live2d*.js
+
+# Frontend - Live2D model files (large binary assets)
+frontend/public/models/
+
+# Frontend - test files
+frontend/test-server.py
