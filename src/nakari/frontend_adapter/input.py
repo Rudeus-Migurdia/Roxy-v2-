@@ -45,7 +45,8 @@ class WebSocketInput:
         try:
             data = json.loads(message)
             msg_type = data.get("type")
-            payload = data.get("payload", {})
+            # Support both "payload" (legacy) and "data" (new frontend) fields
+            payload = data.get("payload") or data.get("data") or {}
 
             if msg_type == "user_text":
                 await self._handle_user_text(payload)

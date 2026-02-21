@@ -37,7 +37,7 @@ async def run_api_server(
         app=app,
         host=host,
         port=port,
-        log_level=log_level,
+        log_level=log_level.lower(),
     )
     server = uvicorn.Server(config)
 

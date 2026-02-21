@@ -53,11 +53,11 @@ class WebSocketOutput(OutputEndpoint):
         """Send message to all connected WebSocket clients."""
         reply_msg = {
             "version": "1.0",
-            "type": "reply",
+            "type": "text",
             "timestamp": asyncio.get_event_loop().time(),
             "payload": {
-                "content": message,
-                **metadata,
+                "text": message,
+                "isUser": False,
             },
         }
         await self._manager.broadcast(reply_msg)

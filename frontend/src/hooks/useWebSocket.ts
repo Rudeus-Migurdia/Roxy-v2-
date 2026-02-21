@@ -118,11 +118,10 @@ export function useWebSocket(
   const sendMessage = useCallback(
     (type: WSMessageType, data: unknown) => {
       if (wsRef.current?.readyState === WebSocket.OPEN) {
-        const message: WSMessage = {
-          type,
-          data,
-          timestamp: Date.now(),
-        };
+        // Backend expects "payload" field for user_text messages
+        const message: WSMessage = type === 'user_text'
+          ? { type, payload: data, timestamp: Date.now() }
+          : { type, data, timestamp: Date.now() };
         wsRef.current.send(JSON.stringify(message));
       } else {
         console.warn('Cannot send message: WebSocket not connected');
@@ -132,7 +131,13 @@ export function useWebSocket(
   );
 
   const sendText = useCallback((text: string, isUser: boolean) => {
-    sendMessage('text', { text, isUser });
+    if (isUser) {
+      // User text input - format expected by backend WebSocketInput
+      sendMessage('user_text', { content: text });
+    } else {
+      // AI reply - format for display
+      sendMessage('text', { text, isUser: false });
+    }
   }, [sendMessage]);
 
   // Cleanup on unmount

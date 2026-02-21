@@ -29,6 +29,7 @@ export type WSMessageType =
   | 'state'
   | 'audio'
   | 'text'
+  | 'user_text'
   | 'emotion'
   | 'motion'
   | 'param'
@@ -37,8 +38,10 @@ export type WSMessageType =
 
 // Base WebSocket message
 export interface WSMessage {
+  version?: string;
   type: WSMessageType;
-  data: unknown;
+  data?: unknown;      // Legacy: some messages may use data
+  payload?: unknown;   // Backend standard: most messages use payload
   timestamp?: number;
 }
 

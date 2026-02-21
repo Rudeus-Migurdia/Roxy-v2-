@@ -50,49 +50,57 @@ function App() {
 
   // Stable message handler using useCallback
   const handleMessage = useCallback((message: WSMessage) => {
-    console.log('WS Message:', message.type);
+    // Use payload for all message types (backend sends payload, not data)
+    const payload = (message as any).payload || message.data;
+    console.log('WS Message:', message.type, payload);
     switch (message.type) {
+      case 'connected':
+        console.log('WebSocket connected:', payload);
+        break;
       case 'state':
-        setCurrentState((message.data as { state: Live2DState }).state);
+        setCurrentState((payload as { state: Live2DState }).state);
         break;
       case 'text':
-        setMessages(prev => [...prev, (message.data as { text: string; isUser: boolean })]);
+        setMessages(prev => [...prev, (payload as { text: string; isUser: boolean })]);
+        break;
+      case 'user_text':
+        console.log('User text received:', payload);
         break;
       case 'audio':
-        console.log('Audio received:', message.data);
+        console.log('Audio received:', payload);
         // Play audio if enabled
         if (config.enableAudio && audioProcessorRefCallback.current?.current) {
-          const audioData = message.data as { audio: string; format: string; sampleRate: number };
+          const audioData = payload as { audio: string; format: string; sampleRate: number };
           audioProcessorRefCallback.current.current.play(audioData.audio)
             .then(() => console.log('[App] Audio playback started'))
             .catch(e => console.error('[App] Audio playback failed:', e));
         }
         break;
       case 'emotion':
-        console.log('Emotion:', message.data);
+        console.log('Emotion:', payload);
         // Apply emotion to Live2D model if available
         if (modelRefCallback.current?.current) {
           import('./live2d/Live2DRenderer').then(({ setModelEmotion }) => {
-            setModelEmotion(modelRefCallback.current.current, (message.data as { emotion: string }).emotion as any);
+            setModelEmotion(modelRefCallback.current.current, (payload as { emotion: string }).emotion as any);
           });
         }
         break;
       case 'motion':
-        console.log('Motion:', message.data);
+        console.log('Motion:', payload);
         // Trigger motion on Live2D model if available
         if (modelRefCallback.current?.current) {
           import('./live2d/Live2DRenderer').then(({ triggerMotion }) => {
-            const motionData = message.data as { group: string; index: number };
+            const motionData = payload as { group: string; index: number };
             triggerMotion(modelRefCallback.current.current, motionData.group, motionData.index);
           });
         }
         break;
       case 'param':
-        console.log('Param:', message.data);
+        console.log('Param:', payload);
         // Direct parameter setting
         if (modelRefCallback.current?.current) {
           import('./live2d/Live2DRenderer').then(({ setModelParams }) => {
-            const paramData = message.data as { params: Array<{ name: string; value: number }> };
+            const paramData = payload as { params: Array<{ name: string; value: number }> };
             setModelParams(modelRefCallback.current.current, paramData.params);
           });
         }

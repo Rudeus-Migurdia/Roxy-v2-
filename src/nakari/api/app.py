@@ -22,6 +22,9 @@ _log = structlog.get_logger("api_app")
 # Global WebSocket manager instance
 ws_manager = WebSocketManager()
 
+# Global WebSocket input handler (set by main)
+ws_input = None
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -94,16 +97,11 @@ def create_app() -> FastAPI:
                 data = await websocket.receive()
 
                 if "text" in data:
-                    # Message will be handled by the input adapter
-                    # For now, just echo for testing
-                    await websocket.send_json(
-                        {
-                            "version": "1.0",
-                            "type": "echo",
-                            "timestamp": asyncio.get_event_loop().time(),
-                            "payload": {"received": data["text"]},
-                        }
-                    )
+                    # Handle message through WebSocketInput adapter
+                    if ws_input:
+                        await ws_input.handle_message(websocket, data["text"])
+                    else:
+                        _log.warning("ws_input_not_configured", message=data["text"][:100])
 
                 elif "bytes" in data:
                     # Binary data (audio chunks)

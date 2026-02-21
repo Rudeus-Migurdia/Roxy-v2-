@@ -72,6 +72,7 @@ async def run() -> None:
 
     if config.api_enabled:
         from nakari.api import get_ws_manager, run_api_server
+        from nakari.api import app as api_app
         from nakari.api.websocket import WebSocketManager
         from nakari.frontend_adapter.audio_interceptor import AudioBroadcaster, wrap_tts_backend
         from nakari.frontend_adapter.input import WebSocketInput
@@ -99,6 +100,9 @@ async def run() -> None:
 
         # Create WebSocket input handler
         ws_input = WebSocketInput(mailbox, config)
+
+        # Set ws_input in api_app module so websocket_endpoint can use it
+        api_app.ws_input = ws_input
 
     # Register all tools
     register_mailbox_tools(registry, mailbox, loop_state, config)
