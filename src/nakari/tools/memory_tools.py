@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import json
 
+import structlog
 from nakari.llm import LLMClient
 from nakari.memory import MemoryStore
 from nakari.tool_registry import ToolRegistry
+
+_log = structlog.get_logger("memory_tools")
 
 
 def register_memory_tools(
@@ -13,12 +16,20 @@ def register_memory_tools(
     llm: LLMClient,
 ) -> None:
     async def memory_query(cypher: str, params: str | None = None) -> str:
-        parsed_params = json.loads(params) if params else {}
+        try:
+            parsed_params = json.loads(params) if params else {}
+        except json.JSONDecodeError as e:
+            _log.error("json_decode_error", params=params[:100] if params else "", error=str(e))
+            return json.dumps({"error": f"Invalid JSON in params parameter: {e}"}, ensure_ascii=False)
         results = await memory.query(cypher, parsed_params)
         return json.dumps(results, default=str, ensure_ascii=False)
 
     async def memory_write(cypher: str, params: str | None = None) -> str:
-        parsed_params = json.loads(params) if params else {}
+        try:
+            parsed_params = json.loads(params) if params else {}
+        except json.JSONDecodeError as e:
+            _log.error("json_decode_error", params=params[:100] if params else "", error=str(e))
+            return json.dumps({"error": f"Invalid JSON in params parameter: {e}"}, ensure_ascii=False)
         results = await memory.write(cypher, parsed_params)
         return json.dumps(results, default=str, ensure_ascii=False)
 

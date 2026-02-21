@@ -6,6 +6,7 @@ Provides HTTP and WebSocket API endpoints for the Live2D frontend.
 from __future__ import annotations
 
 import asyncio
+import os
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
 
@@ -48,13 +49,39 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    # CORS middleware
+    # CORS middleware - security conscious configuration
+    # Default to development-friendly settings, override via ALLOWED_ORIGINS env var
+    allowed_origins = os.getenv("ALLOWED_ORIGINS", "").split(",")
+
+    # If ALLOWED_ORIGINS is not set, use sensible defaults based on environment
+    if not allowed_origins or allowed_origins == [""]:
+        # In development, allow common frontend ports
+        if os.getenv("ENVIRONMENT", "development") == "production":
+            # Production: default to empty (disallow all) - must be explicitly configured
+            allowed_origins = []
+        else:
+            # Development: allow common frontend ports
+            allowed_origins = [
+                "http://localhost:3000",
+                "http://localhost:5173",
+                "http://localhost:5174",
+                "http://localhost:5175",
+                "http://localhost:5182",  # Current frontend port
+                "http://127.0.0.1:3000",
+                "http://127.0.0.1:5173",
+                "http://127.0.0.1:5174",
+                "http://127.0.0.1:5175",
+                "http://127.0.0.1:5182",
+            ]
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # Configure appropriately for production
+        allow_origins=allowed_origins,
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "OPTIONS"],  # Restrict to needed methods
+        allow_headers=["Content-Type", "Authorization", "Accept"],  # Restrict headers
+        expose_headers=["Content-Type", "Content-Length"],
+        max_age=600,  # Cache preflight requests for 10 minutes
     )
 
     # Include routes

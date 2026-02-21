@@ -84,10 +84,12 @@ class ContextManager:
             # also remove orphaned tool results
             if removed.get("role") == "assistant" and removed.get("tool_calls"):
                 call_ids = {tc["id"] for tc in removed["tool_calls"]}
+                # Filter out orphaned tool results
+                # Keep system message (index 0) and all messages not referencing removed tool calls
                 self._messages = [
                     m
-                    for i, m in enumerate(self._messages)
-                    if i == 0 or m.get("tool_call_id") not in call_ids
+                    for m in self._messages
+                    if m.get("role") == "system" or m.get("tool_call_id") not in call_ids
                 ]
 
         self._log.info("passive_compression_done", tokens=self.count_tokens())

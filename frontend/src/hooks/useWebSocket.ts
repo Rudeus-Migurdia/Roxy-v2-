@@ -9,6 +9,10 @@ import type {
   WSMessageType,
 } from '../types';
 
+// 常量配置
+const DEFAULT_RECONNECT_INTERVAL = 3000;
+const MAX_RECONNECT_ATTEMPTS = 10;
+
 interface UseWebSocketOptions {
   autoReconnect?: boolean;
   reconnectInterval?: number;
@@ -39,13 +43,26 @@ export function useWebSocket(
     useState<ConnectionState>('disconnected');
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconnectAttemptsRef = useRef<number>(0);
+  const sendMessageRef = useRef<(type: WSMessageType, data: unknown) => void>();
+  const latestOptionsRef = useRef<UseWebSocketOptions>(options);
 
   const connect = useCallback(() => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
+    if (wsRef.current?.readyState === WebSocket.OPEN ||
+        wsRef.current?.readyState === WebSocket.CONNECTING) {
+      return;
+    }
+
+    // 检查重连次数限制
+    if (reconnectAttemptsRef.current >= MAX_RECONNECT_ATTEMPTS) {
+      console.warn(`Maximum reconnection attempts (${MAX_RECONNECT_ATTEMPTS}) reached`);
+      setConnectionState('error');
+      latestOptionsRef.current.onStateChange?.('error');
       return;
     }
 
     setConnectionState('connecting');
+    latestOptionsRef.current.onStateChange?.('connecting');
 
     try {
       const ws = new WebSocket(url);
@@ -53,9 +70,10 @@ export function useWebSocket(
 
       ws.onopen = () => {
         setConnectionState('connected');
-        onStateChange?.('connected');
+        latestOptionsRef.current.onStateChange?.('connected');
+        reconnectAttemptsRef.current = 0; // 重置重连计数器
 
-        // Clear any pending reconnect timeout
+        // 清除任何待处理的重连超时
         if (reconnectTimeoutRef.current) {
           clearTimeout(reconnectTimeoutRef.current);
           reconnectTimeoutRef.current = null;
@@ -65,11 +83,12 @@ export function useWebSocket(
       ws.onmessage = (event) => {
         try {
           const message: WSMessage = JSON.parse(event.data);
-          onMessage?.(message);
+          latestOptionsRef.current.onMessage?.(message);
 
-          // Handle ping/pong for connection health
+          // 处理ping/pong以维持连接健康
           if (message.type === 'ping') {
-            sendMessage('pong', { timestamp: Date.now() });
+            // 使用ref来确保调用最新的sendMessage
+            sendMessageRef.current?.('pong', { timestamp: Date.now() });
           }
         } catch (error) {
           console.error('Failed to parse WebSocket message:', error);
@@ -79,40 +98,69 @@ export function useWebSocket(
       ws.onerror = (error) => {
         console.error('WebSocket error:', error);
         setConnectionState('error');
-        onStateChange?.('error');
+        latestOptionsRef.current.onStateChange?.('error');
       };
 
-      ws.onclose = () => {
+      ws.onclose = (event) => {
         setConnectionState('disconnected');
-        onStateChange?.('disconnected');
+        latestOptionsRef.current.onStateChange?.('disconnected');
         wsRef.current = null;
 
-        // Auto reconnect if enabled
-        if (autoReconnect) {
+        // 自动重连（如果启用）
+        const currentOptions = latestOptionsRef.current;
+        if (currentOptions.autoReconnect !== false) {
+          reconnectAttemptsRef.current += 1;
+
+          // 指数退避重连延迟
+          const baseInterval = currentOptions.reconnectInterval || DEFAULT_RECONNECT_INTERVAL;
+          const backoffDelay = Math.min(
+            baseInterval * Math.pow(1.5, reconnectAttemptsRef.current - 1),
+            30000 // 最大30秒
+          );
+
           setConnectionState('reconnecting');
+          latestOptionsRef.current.onStateChange?.('reconnecting');
+
           reconnectTimeoutRef.current = window.setTimeout(() => {
             connect();
-          }, reconnectInterval);
+          }, backoffDelay);
+
+          console.log(`Reconnection attempt ${reconnectAttemptsRef.current}/${MAX_RECONNECT_ATTEMPTS} in ${backoffDelay}ms`);
         }
       };
     } catch (error) {
       console.error('Failed to create WebSocket:', error);
       setConnectionState('error');
+      latestOptionsRef.current.onStateChange?.('error');
     }
-  }, [url, autoReconnect, reconnectInterval, onMessage, onStateChange]);
+  }, [url]);
 
   const disconnect = useCallback(() => {
+    // 清除所有超时和引用
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
     }
 
+    // 重置重连计数器
+    reconnectAttemptsRef.current = 0;
+
+    // 关闭WebSocket连接
     if (wsRef.current) {
-      wsRef.current.close();
+      try {
+        wsRef.current.onopen = null;
+        wsRef.current.onmessage = null;
+        wsRef.current.onerror = null;
+        wsRef.current.onclose = null;
+        wsRef.current.close();
+      } catch (e) {
+        console.warn('Error closing WebSocket:', e);
+      }
       wsRef.current = null;
     }
 
     setConnectionState('disconnected');
+    latestOptionsRef.current.onStateChange?.('disconnected');
   }, []);
 
   const sendMessage = useCallback(
@@ -140,10 +188,19 @@ export function useWebSocket(
     }
   }, [sendMessage]);
 
-  // Cleanup on unmount
+  // 更新ref以跟踪最新的options和函数 (必须在函数定义之后)
+  useEffect(() => {
+    latestOptionsRef.current = options;
+    sendMessageRef.current = sendMessage;
+  }, [options, sendMessage]);
+
+  // 组件卸载时清理
   useEffect(() => {
     return () => {
       disconnect();
+      // 清理所有ref引用
+      sendMessageRef.current = undefined;
+      // 注意：不清除latestOptionsRef，因为它可能在其他地方使用
     };
   }, [disconnect]);
 

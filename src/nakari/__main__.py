@@ -146,8 +146,16 @@ async def run() -> None:
 
             # API server (optional)
             if config.api_enabled:
+                async def run_api_server_safe() -> None:
+                    """Run API server with error handling."""
+                    try:
+                        await run_api_server(config.api_host, config.api_port, config.log_level)
+                    except Exception as e:
+                        log.error("api_server_failed", error=str(e))
+                        # Don't re-raise - nakari should continue running without API
+
                 tg.create_task(
-                    run_api_server(config.api_host, config.api_port, config.log_level),
+                    run_api_server_safe(),
                     name="api_server",
                 )
     except* SystemExit:

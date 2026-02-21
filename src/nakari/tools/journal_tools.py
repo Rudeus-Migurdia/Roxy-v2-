@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import json
 
+import structlog
 from nakari.journal import JournalStore
 from nakari.tool_registry import ToolRegistry
+
+_log = structlog.get_logger("journal_tools")
 
 
 def register_journal_tools(
@@ -27,7 +30,11 @@ def register_journal_tools(
         return json.dumps(results, default=str, ensure_ascii=False)
 
     async def journal_query(sql: str, params: str | None = None) -> str:
-        parsed_params = json.loads(params) if params else None
+        try:
+            parsed_params = json.loads(params) if params else None
+        except json.JSONDecodeError as e:
+            _log.error("json_decode_error", params=params[:100] if params else "", error=str(e))
+            return json.dumps({"error": f"Invalid JSON in params parameter: {e}"}, ensure_ascii=False)
         results = await journal.query(sql=sql, params=parsed_params)
         return json.dumps(results, default=str, ensure_ascii=False)
 

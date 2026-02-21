@@ -53,9 +53,11 @@ class Mailbox:
 
     async def wait_for_events(self) -> None:
         """Block until there is at least one PENDING event."""
+        # Clear the event before checking to avoid race condition
+        self._notify.clear()
         while not any(e.status == EventStatus.PENDING for e in self._events.values()):
-            self._notify.clear()
             await self._notify.wait()
+            self._notify.clear()
 
     def qsize(self) -> int:
         return len(self._events)
