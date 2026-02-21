@@ -39,7 +39,7 @@ export type WSMessageType =
 // Base WebSocket message
 export interface WSMessage {
   version?: string;
-  type: WSMessageType;
+  type: WSMessageType | string; // Allow string for additional message types like 'connected'
   data?: unknown;      // Legacy: some messages may use data
   payload?: unknown;   // Backend standard: most messages use payload
   timestamp?: number;
@@ -105,4 +105,35 @@ export interface AppConfig {
   modelConfig: Live2DModelConfig;
   enableAudio: boolean;
   enableLipSync: boolean;
+}
+
+// ===== Galgame UI Types =====
+
+// Dialog state
+export interface DialogState {
+  text: string;
+  speaker?: string;
+  isUser: boolean;
+  timestamp: number;
+}
+
+// Choice option
+export interface ChoiceOption {
+  id: string;
+  text: string;
+  disabled?: boolean;
+}
+
+// Control panel state
+export interface ControlState {
+  autoMode: boolean;
+  skipMode: boolean;
+  speed: number; // Text display speed multiplier
+}
+
+// Transition trigger info
+export interface TransitionTrigger {
+  type: 'emotion_change' | 'state_change' | 'scene_change' | 'manual';
+  from?: string;
+  to: string;
 }

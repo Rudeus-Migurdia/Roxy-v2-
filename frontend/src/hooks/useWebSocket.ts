@@ -32,19 +32,12 @@ export function useWebSocket(
   url: string,
   options: UseWebSocketOptions = {}
 ): UseWebSocketReturn {
-  const {
-    autoReconnect = true,
-    reconnectInterval = 3000,
-    onMessage,
-    onStateChange,
-  } = options;
-
   const [connectionState, setConnectionState] =
     useState<ConnectionState>('disconnected');
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectAttemptsRef = useRef<number>(0);
-  const sendMessageRef = useRef<(type: WSMessageType, data: unknown) => void>();
+  const sendMessageRef = useRef<((type: WSMessageType, data: unknown) => void) | null>(null);
   const latestOptionsRef = useRef<UseWebSocketOptions>(options);
 
   const connect = useCallback(() => {
@@ -95,13 +88,13 @@ export function useWebSocket(
         }
       };
 
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
+      ws.onerror = (_error) => {
+        console.error('WebSocket error occurred');
         setConnectionState('error');
         latestOptionsRef.current.onStateChange?.('error');
       };
 
-      ws.onclose = (event) => {
+      ws.onclose = () => {
         setConnectionState('disconnected');
         latestOptionsRef.current.onStateChange?.('disconnected');
         wsRef.current = null;
@@ -112,7 +105,7 @@ export function useWebSocket(
           reconnectAttemptsRef.current += 1;
 
           // 指数退避重连延迟
-          const baseInterval = currentOptions.reconnectInterval || DEFAULT_RECONNECT_INTERVAL;
+          const baseInterval = currentOptions.reconnectInterval ?? DEFAULT_RECONNECT_INTERVAL;
           const backoffDelay = Math.min(
             baseInterval * Math.pow(1.5, reconnectAttemptsRef.current - 1),
             30000 // 最大30秒
@@ -192,14 +185,14 @@ export function useWebSocket(
   useEffect(() => {
     latestOptionsRef.current = options;
     sendMessageRef.current = sendMessage;
-  }, [options, sendMessage]);
+  }, [options]);
 
   // 组件卸载时清理
   useEffect(() => {
     return () => {
       disconnect();
       // 清理所有ref引用
-      sendMessageRef.current = undefined;
+      sendMessageRef.current = null;
       // 注意：不清除latestOptionsRef，因为它可能在其他地方使用
     };
   }, [disconnect]);

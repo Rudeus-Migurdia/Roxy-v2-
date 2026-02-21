@@ -1,0 +1,87 @@
+/**
+ * P5R Theme CSS Variables
+ * Based on Persona 5 Royal's black/white/red color scheme
+ */
+
+:root {
+  /* Primary Colors */
+  --p5r-black: #0a0a0a;
+  --p5r-white: #ffffff;
+  --p5r-red: #e63946;
+  --p5r-red-dark: #b82d3a;
+
+  /* Accent Colors */
+  --p5r-yellow: #ffd60a;
+  --p5r-gray: #6c757d;
+
+  /* UI Colors */
+  --p5r-overlay: rgba(10, 10, 10, 0.9);
+  --p5r-glass: rgba(255, 255, 255, 0.1);
+  --p5r-border: rgba(255, 255, 255, 0.2);
+
+  /* Dialog Colors */
+  --p5r-dialog-bg: rgba(0, 0, 0, 0.85);
+  --p5r-dialog-border: #e63946;
+  --p5r-dialog-text: #ffffff;
+  --p5r-dialog-name-tag: #e63946;
+
+  /* Status Colors */
+  --p5r-success: #22c55e;
+  --p5r-warning: #eab308;
+  --p5r-error: #ef4444;
+  --p5r-info: #3b82f6;
+
+  /* Typography */
+  --p5r-font-ui: "Segoe UI", "Microsoft YaHei", sans-serif;
+  --p5r-font-dialog: "Segoe UI", "Microsoft YaHei", sans-serif;
+
+  --p5r-font-size-ui: 14px;
+  --p5r-font-size-dialog: 18px;
+
+  --p5r-letter-spacing: 2px;
+
+  /* Transitions */
+  --p5r-easing-sharp: cubic-bezier(0.16, 1, 0.3, 1);
+  --p5r-easing-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --p5r-easing-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  --p5r-duration-fast: 150ms;
+  --p5r-duration-normal: 300ms;
+  --p5r-duration-slow: 600ms;
+  --p5r-duration-dramatic: 1200ms;
+
+  /* Spacing */
+  --p5r-spacing-xs: 4px;
+  --p5r-spacing-sm: 8px;
+  --p5r-spacing-md: 16px;
+  --p5r-spacing-lg: 24px;
+  --p5r-spacing-xl: 32px;
+
+  /* Border Radius */
+  --p5r-radius-sm: 4px;
+  --p5r-radius-md: 8px;
+  --p5r-radius-lg: 12px;
+  --p5r-radius-full: 9999px;
+
+  /* Shadows */
+  --p5r-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+  --p5r-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --p5r-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --p5r-shadow-glow-red: 0 0 20px rgba(230, 57, 70, 0.5);
+
+  /* Z-Index */
+  --p5r-z-background: 1;
+  --p5r-z-live2d: 10;
+  --p5r-z-overlay: 50;
+  --p5r-z-dialog: 100;
+  --p5r-z-control-panel: 90;
+  --p5r-z-transition: 200;
+  --p5r-z-tooltip: 300;
+}
+
+/* Dark mode support (default) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Already dark by default */
+  }
+}

@@ -1,0 +1,230 @@
+/**
+ * P5R Transition Styles
+ * Styles for transition effects (shatter, slash, glitch, etc.)
+ */
+
+/* ===== Transition Overlay Base ===== */
+.p5r-transition-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: var(--p5r-z-transition);
+  will-change: transform, opacity;
+}
+
+/* ===== Slash Transition ===== */
+.p5r-slash-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--p5r-black);
+}
+
+.p5r-slash-line {
+  position: absolute;
+  width: 4px;
+  height: 150%;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--p5r-red) 20%,
+    var(--p5r-red-dark) 50%,
+    var(--p5r-red) 80%,
+    transparent
+  );
+  top: -25%;
+  left: 0;
+  transform-origin: center;
+  box-shadow: 0 0 20px var(--p5r-red);
+}
+
+.p5r-slash-down .p5r-slash-line {
+  animation: slash-sweep-down var(--p5r-duration-normal) var(--p5r-easing-sharp) forwards;
+}
+
+.p5r-slash-up .p5r-slash-line {
+  animation: slash-sweep-up var(--p5r-duration-normal) var(--p5r-easing-sharp) forwards;
+}
+
+@keyframes slash-sweep-down {
+  0% {
+    transform: rotate(-45deg) translateX(-100%);
+  }
+  100% {
+    transform: rotate(-45deg) translateX(250%);
+  }
+}
+
+@keyframes slash-sweep-up {
+  0% {
+    transform: rotate(45deg) translateX(-100%);
+  }
+  100% {
+    transform: rotate(45deg) translateX(250%);
+  }
+}
+
+/* ===== Shatter Transition ===== */
+.p5r-shatter-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.p5r-fragment {
+  position: absolute;
+  background: var(--p5r-black);
+  will-change: transform, opacity;
+}
+
+.p5r-fragment.shatter-out {
+  animation: shatter-out var(--p5r-duration-slow) var(--p5r-easing-sharp) forwards;
+}
+
+@keyframes shatter-out {
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--tx), var(--ty)) rotate(var(--rot)) scale(0.3);
+    opacity: 0;
+  }
+}
+
+/* ===== Glitch Transition ===== */
+.p5r-glitch-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    var(--p5r-black) 2px,
+    var(--p5r-black) 4px
+  );
+  opacity: 0.8;
+}
+
+.p5r-glitch-active {
+  animation: glitch-effect var(--p5r-duration-normal) steps(10) forwards;
+}
+
+@keyframes glitch-effect {
+  0% {
+    clip-path: inset(40% 0 61% 0);
+    transform: translate(-2px, 2px);
+  }
+  20% {
+    clip-path: inset(92% 0 1% 0);
+    transform: translate(2px, -2px);
+  }
+  40% {
+    clip-path: inset(43% 0 1% 0);
+    transform: translate(-2px, 2px);
+  }
+  60% {
+    clip-path: inset(25% 0 58% 0);
+    transform: translate(2px, -2px);
+  }
+  80% {
+    clip-path: inset(54% 0 7% 0);
+    transform: translate(-2px, 2px);
+  }
+  100% {
+    clip-path: inset(58% 0 43% 0);
+    transform: translate(0, 0);
+  }
+}
+
+/* ===== Fade Transition ===== */
+.p5r-fade-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--p5r-black);
+}
+
+.p5r-fade-in {
+  animation: fade-in var(--p5r-duration-fast) ease-out forwards;
+}
+
+.p5r-fade-out {
+  animation: fade-out var(--p5r-duration-fast) ease-in forwards;
+}
+
+@keyframes fade-in {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes fade-out {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ===== Wipe Transition ===== */
+.p5r-wipe-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--p5r-black);
+}
+
+.p5r-wipe-right {
+  animation: wipe-right var(--p5r-duration-normal) var(--p5r-easing-sharp) forwards;
+}
+
+.p5r-wipe-left {
+  animation: wipe-left var(--p5r-duration-normal) var(--p5r-easing-sharp) forwards;
+}
+
+@keyframes wipe-right {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes wipe-left {
+  from { clip-path: inset(0 0 0 100%); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+/* ===== Transition Utility Classes ===== */
+.transition-fast {
+  transition-duration: var(--p5r-duration-fast);
+}
+
+.transition-normal {
+  transition-duration: var(--p5r-duration-normal);
+}
+
+.transition-slow {
+  transition-duration: var(--p5r-duration-slow);
+}
+
+.easing-sharp {
+  transition-timing-function: var(--p5r-easing-sharp);
+}
+
+.easing-smooth {
+  transition-timing-function: var(--p5r-easing-smooth);
+}
+
+.easing-bounce {
+  transition-timing-function: var(--p5r-easing-bounce);
+}

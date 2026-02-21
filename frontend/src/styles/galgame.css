@@ -1,0 +1,458 @@
+/**
+ * Galgame Style Layout
+ * Visual novel inspired layout with character display and dialog box
+ */
+
+/* ===== Main Container ===== */
+.galgame-container {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+  background: var(--p5r-black);
+}
+
+/* ===== Background Layer ===== */
+.galgame-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: var(--p5r-z-background);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: opacity var(--p5r-duration-slow) ease;
+}
+
+.galgame-background::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    135deg,
+    rgba(10, 10, 10, 0.3) 0%,
+    rgba(10, 10, 10, 0.1) 50%,
+    rgba(10, 10, 10, 0.5) 100%
+  );
+}
+
+/* ===== Live2D Character Layer ===== */
+.galgame-character-layer {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 90%;
+  z-index: var(--p5r-z-live2d);
+  transition: transform var(--p5r-duration-normal) var(--p5r-easing-sharp);
+}
+
+.galgame-character-layer canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Character entrance animation */
+.galgame-character-enter {
+  animation: characterEnter var(--p5r-duration-dramatic) var(--p5r-easing-smooth) forwards;
+}
+
+/* ===== Game Header (Top Bar) ===== */
+.galgame-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 var(--p5r-spacing-lg);
+  z-index: var(--p5r-z-control-panel);
+  background: linear-gradient(
+    to bottom,
+    rgba(10, 10, 10, 0.8) 0%,
+    transparent 100%
+  );
+}
+
+.galgame-menu-button {
+  background: var(--p5r-glass);
+  border: 1px solid var(--p5r-border);
+  color: var(--p5r-white);
+  padding: var(--p5r-spacing-sm) var(--p5r-spacing-md);
+  font: var(--p5r-font-ui);
+  font-size: var(--p5r-font-size-ui);
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: var(--p5r-letter-spacing);
+  cursor: pointer;
+  transition: all var(--p5r-duration-fast) var(--p5r-easing-sharp);
+  position: relative;
+  overflow: hidden;
+}
+
+.galgame-menu-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left var(--p5r-duration-normal) var(--p5r-easing-smooth);
+}
+
+.galgame-menu-button:hover {
+  background: var(--p5r-red);
+  border-color: var(--p5r-red);
+  transform: translateY(-2px);
+  box-shadow: var(--p5r-shadow-glow-red);
+}
+
+.galgame-menu-button:hover::before {
+  animation: button-shine 0.6s ease;
+}
+
+.galgame-menu-button:active {
+  transform: translateY(0);
+}
+
+/* ===== Status Indicator ===== */
+.galgame-status-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--p5r-spacing-sm);
+  padding: var(--p5r-spacing-sm) var(--p5r-spacing-md);
+  background: var(--p5r-overlay);
+  border-radius: var(--p5r-radius-full);
+  color: var(--p5r-white);
+  font: var(--p5r-font-ui);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  backdrop-filter: blur(10px);
+}
+
+.galgame-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+.galgame-status-dot.connected {
+  background: var(--p5r-success);
+}
+
+.galgame-status-dot.connecting,
+.galgame-status-dot.reconnecting {
+  background: var(--p5r-warning);
+}
+
+.galgame-status-dot.error,
+.galgame-status-dot.disconnected {
+  background: var(--p5r-error);
+}
+
+/* ===== Dialog Container ===== */
+.galgame-dialog-container {
+  position: absolute;
+  bottom: var(--p5r-spacing-lg);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 85%;
+  max-width: 900px;
+  z-index: var(--p5r-z-dialog);
+}
+
+/* ===== Character Name Tag ===== */
+.galgame-character-name {
+  display: inline-block;
+  padding: var(--p5r-spacing-sm) var(--p5r-spacing-md);
+  background: var(--p5r-dialog-name-tag);
+  color: var(--p5r-white);
+  font: var(--p5r-font-ui);
+  font-size: var(--p5r-font-size-ui);
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: var(--p5r-letter-spacing);
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 50%,
+    calc(100% - 10px) 100%,
+    0 100%
+  );
+  margin-bottom: var(--p5r-spacing-sm);
+  animation: slideInLeft var(--p5r-duration-fast) var(--p5r-easing-sharp);
+}
+
+.galgame-character-name.empty {
+  display: none;
+}
+
+/* ===== Dialog Box ===== */
+.galgame-dialog-box {
+  position: relative;
+  padding: var(--p5r-spacing-lg) var(--p5r-spacing-xl);
+  background: var(--p5r-dialog-bg);
+  border: 2px solid var(--p5r-dialog-border);
+  color: var(--p5r-dialog-text);
+  font: var(--p5r-font-dialog);
+  font-size: var(--p5r-font-size-dialog);
+  line-height: 1.6;
+  backdrop-filter: blur(10px);
+  clip-path: polygon(
+    0 0,
+    calc(100% - 15px) 0,
+    100% 15px,
+    100% 100%,
+    15px 100%,
+    0 calc(100% - 15px)
+  );
+  animation: dialogSlideIn var(--p5r-duration-normal) var(--p5r-easing-smooth);
+  min-height: 80px;
+}
+
+.galgame-dialog-text {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.galgame-dialog-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1.2em;
+  background: var(--p5r-red);
+  margin-left: 2px;
+  animation: blink 0.8s infinite;
+  vertical-align: text-bottom;
+}
+
+.galgame-dialog-cursor.hidden {
+  display: none;
+}
+
+/* ===== Control Panel (Right Side) ===== */
+.galgame-control-panel {
+  position: absolute;
+  right: var(--p5r-spacing-lg);
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: var(--p5r-spacing-md);
+  z-index: var(--p5r-z-control-panel);
+}
+
+.galgame-control-button {
+  width: 50px;
+  height: 50px;
+  background: var(--p5r-glass);
+  border: 2px solid var(--p5r-border);
+  border-radius: var(--p5r-radius-md);
+  color: var(--p5r-white);
+  font: var(--p5r-font-ui);
+  font-size: 10px;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all var(--p5r-duration-fast) var(--p5r-easing-sharp);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+.galgame-control-button:hover {
+  background: var(--p5r-red);
+  border-color: var(--p5r-red);
+  transform: scale(1.1);
+  box-shadow: var(--p5r-shadow-glow-red);
+}
+
+.galgame-control-button:active {
+  transform: scale(0.95);
+}
+
+.galgame-control-button.active {
+  background: var(--p5r-red);
+  border-color: var(--p5r-red);
+  box-shadow: var(--p5r-shadow-glow-red);
+}
+
+/* ===== Input Area ===== */
+.galgame-input-container {
+  position: absolute;
+  bottom: calc(var(--p5r-spacing-lg) + 140px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: var(--p5r-spacing-md);
+  z-index: var(--p5r-z-dialog);
+  width: 60%;
+  max-width: 500px;
+}
+
+.galgame-input {
+  flex: 1;
+  padding: var(--p5r-spacing-md) var(--p5r-spacing-lg);
+  border: 2px solid var(--p5r-border);
+  border-radius: var(--p5r-radius-full);
+  background: var(--p5r-glass);
+  color: var(--p5r-white);
+  font: var(--p5r-font-ui);
+  font-size: 14px;
+  outline: none;
+  transition: all var(--p5r-duration-fast) var(--p5r-easing-smooth);
+  backdrop-filter: blur(10px);
+}
+
+.galgame-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.galgame-input:focus {
+  border-color: var(--p5r-red);
+  box-shadow: 0 0 10px rgba(230, 57, 70, 0.3);
+}
+
+.galgame-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.galgame-send-button {
+  padding: var(--p5r-spacing-md) var(--p5r-spacing-xl);
+  border: none;
+  border-radius: var(--p5r-radius-full);
+  background: linear-gradient(135deg, var(--p5r-red), var(--p5r-red-dark));
+  color: var(--p5r-white);
+  font: var(--p5r-font-ui);
+  font-size: var(--p5r-font-size-ui);
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: var(--p5r-letter-spacing);
+  cursor: pointer;
+  transition: all var(--p5r-duration-fast) var(--p5r-easing-sharp);
+}
+
+.galgame-send-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--p5r-shadow-glow-red);
+}
+
+.galgame-send-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.galgame-send-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== Choice Buttons ===== */
+.galgame-choice-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: var(--p5r-spacing-md);
+  z-index: var(--p5r-z-overlay);
+  background: rgba(10, 10, 10, 0.7);
+  backdrop-filter: blur(5px);
+  animation: fadeIn var(--p5r-duration-normal) ease;
+}
+
+.galgame-choice-button {
+  min-width: 300px;
+  padding: var(--p5r-spacing-md) var(--p5r-spacing-xl);
+  background: var(--p5r-glass);
+  border: 2px solid var(--p5r-border);
+  color: var(--p5r-white);
+  font: var(--p5r-font-ui);
+  font-size: var(--p5r-font-size-dialog);
+  cursor: pointer;
+  transition: all var(--p5r-duration-fast) var(--p5r-easing-sharp);
+  clip-path: polygon(
+    10px 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% calc(100% - 10px),
+    calc(100% - 10px) 100%,
+    10px 100%,
+    0 calc(100% - 10px),
+    0 10px
+  );
+}
+
+.galgame-choice-button:hover {
+  background: var(--p5r-red);
+  border-color: var(--p5r-red);
+  transform: translateX(10px);
+  box-shadow: var(--p5r-shadow-glow-red);
+}
+
+/* ===== Responsive Design ===== */
+@media (max-width: 1366px) {
+  .galgame-character-layer {
+    right: 2%;
+    height: 85%;
+  }
+
+  .galgame-dialog-container {
+    width: 90%;
+  }
+
+  .galgame-control-panel {
+    right: var(--p5r-spacing-md);
+  }
+}
+
+@media (max-width: 768px) {
+  .galgame-character-layer {
+    right: 0;
+    height: 70%;
+  }
+
+  .galgame-dialog-container {
+    width: 95%;
+    bottom: var(--p5r-spacing-md);
+  }
+
+  .galgame-control-panel {
+    top: auto;
+    bottom: calc(var(--p5r-spacing-lg) + 140px);
+    right: var(--p5r-spacing-md);
+    transform: none;
+    flex-direction: row;
+  }
+
+  .galgame-input-container {
+    width: 90%;
+    bottom: calc(var(--p5r-spacing-md) + 120px);
+  }
+
+  .galgame-control-button {
+    width: 40px;
+    height: 40px;
+    writing-mode: horizontal-tb;
+  }
+}

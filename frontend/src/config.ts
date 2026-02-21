@@ -21,7 +21,7 @@ const getApiUrl = (): string => {
 
 // Get model URL from environment or use default
 const getModelUrl = (): string => {
-  return import.meta.env.VITE_MODEL_URL || '/models/xiaomai/xiaomai.model.json';
+  return import.meta.env.VITE_MODEL_URL || '/models/22_high/model.json';
 };
 
 // Export configuration

@@ -1,4 +1,10 @@
-/* Global styles for Live2D frontend */
+/* Import P5R theme variables - must be first */
+@import './styles/variables.css';
+@import './styles/animations.css';
+@import './styles/transitions.css';
+@import './styles/galgame.css';
+
+/* Global styles for Live2D frontend - P5R/Galgame Theme */
 
 * {
   margin: 0;
@@ -13,7 +19,8 @@ html, body, #root {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family: var(--p5r-font-ui);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background: var(--p5r-black);
 }
