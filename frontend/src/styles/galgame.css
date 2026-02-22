@@ -20,14 +20,14 @@
   width: 100%;
   height: 100%;
   pointer-events: none;
-  transform: translateX(80px);
+  transform: translateX(2.1vw);
   transition: transform var(--p5r-duration-normal) var(--p5r-easing-sharp);
   z-index: var(--p5r-z-live2d);
 }
 
-/* Shift right when sidebar is open and NOT collapsed (80px + 200px = 280px) */
+/* Shift right when sidebar is open and NOT collapsed (2.1vw + 5.2vw = 7.3vw) */
 .galgame-main-view--shift-right {
-  transform: translateX(280px);
+  transform: translateX(7.3vw);
 }
 
 /* Enable pointer events on children */
@@ -366,7 +366,7 @@
 .galgame-input-container {
   position: absolute;
   bottom: calc(var(--p5r-spacing-lg) + 140px);
-  left: calc(50% - 30px);
+  left: calc(50% - 0.8vw);
   transform: translateX(-50%);
   display: flex;
   gap: var(--p5r-spacing-md);
@@ -688,7 +688,7 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 256px;
+  width: 9vw;
   background: var(--p5r-overlay);
   border-right: 1px solid var(--p5r-border);
   backdrop-filter: blur(20px);
@@ -722,7 +722,7 @@
 
 /* Collapsed state */
 .galgame-sidebar--collapsed {
-  width: 72px;
+  width: 3vw;
 }
 
 /* Hide text when collapsed - using display: none like sample.txt */
@@ -750,6 +750,7 @@
   border-radius: var(--p5r-radius-full);
   color: var(--p5r-white);
   cursor: pointer;
+  margin-left: -0.5vw;
   transition: background-color var(--p5r-duration-fast) var(--p5r-easing-sharp);
 }
 
@@ -773,6 +774,7 @@
   font: var(--p5r-font-ui);
   font-size: 14px;
   cursor: pointer;
+  margin-left: -0.5vw;
   transition: all var(--p5r-duration-fast) var(--p5r-easing-sharp);
   min-width: 56px;
   width: fit-content;
@@ -830,6 +832,7 @@
   border-radius: var(--p5r-radius-full);
   color: var(--p5r-white);
   text-decoration: none;
+  margin-left: -0.5vw;
   transition: background-color var(--p5r-duration-fast) var(--p5r-easing-sharp);
 }
 
@@ -869,6 +872,7 @@
   cursor: pointer;
   font: var(--p5r-font-ui);
   font-size: 14px;
+  margin-left: -0.5vw;
   transition: background-color var(--p5r-duration-fast) var(--p5r-easing-sharp);
 }
 
