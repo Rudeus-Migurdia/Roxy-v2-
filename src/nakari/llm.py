@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 import structlog
-from openai import AsyncOpenAI, NOT_GIVEN
+from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletion
 
 from nakari.config import Config

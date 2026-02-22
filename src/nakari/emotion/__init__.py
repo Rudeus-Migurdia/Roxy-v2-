@@ -6,13 +6,7 @@ used to drive Live2D facial expressions.
 
 from __future__ import annotations
 
-import re
-from typing import TYPE_CHECKING
-
 from nakari.emotion.analyzer import EmotionAnalyzer
 from nakari.emotion.mapper import Live2DParamMapper
 
 __all__ = ["EmotionAnalyzer", "Live2DParamMapper"]
-
-if TYPE_CHECKING:
-    pass

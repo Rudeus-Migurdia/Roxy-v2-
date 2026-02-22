@@ -14,6 +14,7 @@ interface NavItem {
 interface LeftSidebarProps {
   navItems?: NavItem[];
   chatHistory?: { id: string; title: string }[];
+  onSettingsClick?: () => void;
 }
 
 const defaultNavItems: NavItem[] = [
@@ -28,6 +29,7 @@ const defaultChatHistory: { id: string; title: string }[] = [];
 export function LeftSidebar({
   navItems = defaultNavItems,
   chatHistory = defaultChatHistory,
+  onSettingsClick,
 }: LeftSidebarProps) {
   const { leftSidebarOpen, leftSidebarCollapsed, toggleLeftSidebar, toggleLeftSidebarCollapse } = useSidebarContext();
 
@@ -95,7 +97,7 @@ export function LeftSidebar({
 
       {/* Bottom: Settings */}
       <div className="galgame-sidebar__bottom">
-        <button className="galgame-sidebar__bottom-item">
+        <button className="galgame-sidebar__bottom-item" onClick={onSettingsClick}>
           <span className="galgame-sidebar__bottom-icon">⚙</span>
           <span className="galgame-sidebar__text">设置</span>
         </button>

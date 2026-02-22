@@ -5,14 +5,9 @@ Maps detected emotions to Live2D model parameters for facial expressions.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import structlog
 
 from nakari.emotion.analyzer import EmotionType
-
-if TYPE_CHECKING:
-    pass
 
 
 _log = structlog.get_logger("live2d_mapper")

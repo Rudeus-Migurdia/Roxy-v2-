@@ -26,8 +26,12 @@ import {
 // UI components
 import { StatusIndicator } from './components/ui';
 
+// Settings
+import { SettingsPanel } from './components/settings';
+
 // Context providers
 import { SidebarProvider, useSidebarContext } from './contexts/SidebarContext';
+import { SettingsProvider } from './contexts/SettingsContext';
 
 // Error Boundary
 class ErrorBoundary extends Component<{children: ReactNode}, {hasError: boolean, error: any}> {
@@ -70,6 +74,7 @@ function App() {
   const [currentEmotion, setCurrentEmotion] = useState<string>('neutral');
   const [live2dReady, setLive2dReady] = useState(false);
   const [messageHistory, setMessageHistory] = useState<DialogState[]>([]);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   // Sidebar state
   const { leftSidebarOpen, leftSidebarCollapsed } = useSidebarContext();
@@ -186,7 +191,7 @@ function App() {
   }, []);
 
   // Use WebSocket hook with stable callbacks
-  const { connectionState, sendText, connect } = useWebSocket(config.wsUrl, {
+  const { connectionState, sendText, sendMessage, connect } = useWebSocket(config.wsUrl, {
     autoReconnect: true,
     reconnectInterval: 3000,
     onMessage: handleMessage,
@@ -258,7 +263,7 @@ function App() {
       <BackgroundLayer />
 
       {/* Left Sidebar - Navigation */}
-      <LeftSidebar />
+      <LeftSidebar onSettingsClick={() => setSettingsOpen(true)} />
 
       {/* Main View Container - shifts as a unit when sidebar opens */}
       <MainViewContainer
@@ -286,6 +291,7 @@ function App() {
         {/* Input Area */}
         <TextInput
           onSend={handleSendMessage}
+          wsSend={sendMessage}
           disabled={connectionState !== 'connected'}
           placeholder="Type a message..."
         />
@@ -298,6 +304,9 @@ function App() {
         </div>
       )}
 
+      {/* Settings Panel */}
+      {settingsOpen && <SettingsPanel onClose={() => setSettingsOpen(false)} />}
+
       {/* Header with Status */}
       <header className="galgame-header">
         <StatusIndicator connectionState={connectionState} live2dReady={live2dReady} />
@@ -308,9 +317,11 @@ function App() {
 
 function AppWithProviders() {
   return (
-    <SidebarProvider defaultLeftOpen={true} defaultRightOpen={false} defaultLeftCollapsed={true}>
-      <App />
-    </SidebarProvider>
+    <SettingsProvider>
+      <SidebarProvider defaultLeftOpen={true} defaultRightOpen={false} defaultLeftCollapsed={true}>
+        <App />
+      </SidebarProvider>
+    </SettingsProvider>
   );
 }
 

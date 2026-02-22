@@ -34,7 +34,8 @@ export type WSMessageType =
   | 'motion'
   | 'param'
   | 'ping'
-  | 'pong';
+  | 'pong'
+  | 'audio_blob'; // 语音输入音频块消息
 
 // Base WebSocket message
 export interface WSMessage {
@@ -56,6 +57,17 @@ export interface AudioData {
   audio: string; // base64 encoded audio chunk
   format: 'wav' | 'mp3';
   sampleRate: number;
+}
+
+// Audio blob message data (语音输入)
+export interface AudioBlobData {
+  audio_uri: string; // base64 encoded audio with data URI prefix
+  mime_type: string;
+  metadata?: {
+    size?: number;
+    type?: string;
+    [key: string]: unknown;
+  };
 }
 
 // Text message data
