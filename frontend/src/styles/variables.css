@@ -1,14 +1,14 @@
 /**
  * P5R Theme CSS Variables
- * Based on Persona 5 Royal's black/white/blue color scheme
+ * Based on Persona 5 Royal's black/white/orange color scheme
  */
 
 :root {
   /* Primary Colors */
   --p5r-black: #0a0a0a;
   --p5r-white: #ffffff;
-  --p5r-red: #64B5F6;
-  --p5r-red-dark: #42A5F5;
+  --p5r-red: #FFCCB3;
+  --p5r-red-dark: #FFB399;
 
   /* Accent Colors */
   --p5r-yellow: #ffd60a;
@@ -21,9 +21,9 @@
 
   /* Dialog Colors */
   --p5r-dialog-bg: rgba(0, 0, 0, 0.85);
-  --p5r-dialog-border: #64B5F6;
+  --p5r-dialog-border: #FFCCB3;
   --p5r-dialog-text: #ffffff;
-  --p5r-dialog-name-tag: #64B5F6;
+  --p5r-dialog-name-tag: #FFCCB3;
 
   /* Status Colors */
   --p5r-success: #22c55e;
@@ -67,7 +67,7 @@
   --p5r-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
   --p5r-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
   --p5r-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
-  --p5r-shadow-glow-red: 0 0 20px rgba(100, 181, 246, 0.5);
+  --p5r-shadow-glow-red: 0 0 20px rgba(255, 204, 179, 0.5);
 
   /* Z-Index */
   --p5r-z-background: 1;

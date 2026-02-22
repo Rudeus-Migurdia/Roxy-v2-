@@ -55,7 +55,12 @@
 
 /* Live2D shift effects when sidebar opens - moves same amount as dialog to maintain spacing */
 .galgame-character-layer--shift-right {
-  transform: translateX(-30%);
+  transform: translateX(-15%);
+}
+
+/* When sidebar is collapsed, use less shift */
+.galgame-character-layer--shift-right-collapsed {
+  transform: translateX(-45%);
 }
 
 .galgame-character-layer--shift-left {
@@ -194,9 +199,14 @@
 
 /* Dialog shift effects when sidebar opens - moves same amount as Live2D to maintain spacing */
 .galgame-dialog-container--shift-right {
-  transform: translateX(-12%);
+  transform: translateX(-5%);
   width: 70%;
   max-width: 750px;
+}
+
+/* When sidebar is collapsed, use less shift */
+.galgame-dialog-container--shift-right-collapsed {
+  transform: translateX(-38%);
 }
 
 .galgame-dialog-container--shift-left {
@@ -345,9 +355,14 @@
 
 /* Input container shift effects when sidebar opens - moves same amount as other elements */
 .galgame-input-container--shift-right {
-  transform: translateX(-20%);
+  transform: translateX(-10%);
   width: 50%;
   max-width: 420px;
+}
+
+/* When sidebar is collapsed, use less shift */
+.galgame-input-container--shift-right-collapsed {
+  transform: translateX(-32%);
 }
 
 .galgame-input-container--shift-left {
@@ -650,15 +665,16 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 280px;
+  width: 256px;
   background: var(--p5r-overlay);
-  border: 2px solid var(--p5r-border);
+  border-right: 1px solid var(--p5r-border);
   backdrop-filter: blur(20px);
-  z-index: 5;
+  z-index: calc(var(--p5r-z-control-panel) + 1);
   display: flex;
   flex-direction: column;
   transform: translateX(-100%);
-  transition: transform var(--p5r-duration-normal) var(--p5r-easing-sharp);
+  transition: transform var(--p5r-duration-normal) var(--p5r-easing-sharp),
+              width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .galgame-sidebar--left {
@@ -681,6 +697,173 @@
   transform: translateX(0);
 }
 
+/* Collapsed state */
+.galgame-sidebar--collapsed {
+  width: 72px;
+}
+
+/* Hide text when collapsed - using display: none like sample.txt */
+.galgame-sidebar--collapsed .galgame-sidebar__text {
+  display: none;
+}
+
+.galgame-sidebar__text {
+  white-space: nowrap;
+}
+
+/* ===== Sidebar Top (Menu Button) ===== */
+.galgame-sidebar__top {
+  padding: var(--p5r-spacing-md);
+}
+
+.galgame-sidebar__toggle-btn {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: var(--p5r-radius-full);
+  color: var(--p5r-white);
+  cursor: pointer;
+  transition: background-color var(--p5r-duration-fast) var(--p5r-easing-sharp);
+}
+
+.galgame-sidebar__toggle-btn:hover {
+  background-color: var(--p5r-glass);
+}
+
+/* ===== Sidebar Middle (New Chat Button) ===== */
+.galgame-sidebar__middle {
+  padding: 0 var(--p5r-spacing-sm) var(--p5r-spacing-md);
+}
+
+.galgame-sidebar__new-chat {
+  display: flex;
+  align-items: center;
+  gap: var(--p5r-spacing-md);
+  padding: var(--p5r-spacing-md) var(--p5r-spacing-lg);
+  background: transparent;
+  border: none;
+  color: var(--p5r-white);
+  font: var(--p5r-font-ui);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all var(--p5r-duration-fast) var(--p5r-easing-sharp);
+  min-width: 56px;
+  width: fit-content;
+}
+
+/* Collapsed state: center the icon */
+.galgame-sidebar--collapsed .galgame-sidebar__new-chat {
+  padding: var(--p5r-spacing-md);
+  justify-content: center;
+}
+
+.galgame-sidebar__new-chat:hover {
+  opacity: 0.7;
+}
+
+.galgame-sidebar__icon-plus {
+  font-size: 20px;
+  color: var(--p5r-red);
+  flex-shrink: 0;
+}
+
+/* ===== Sidebar History ===== */
+.galgame-sidebar__history {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 var(--p5r-spacing-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--p5r-spacing-xs);
+}
+
+/* Hide scrollbar */
+.galgame-sidebar__history::-webkit-scrollbar {
+  display: none;
+}
+.galgame-sidebar__history {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.galgame-sidebar__history-title {
+  font: var(--p5r-font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--p5r-gray);
+  text-transform: uppercase;
+  padding: var(--p5r-spacing-sm) var(--p5r-spacing-md);
+}
+
+.galgame-sidebar__history-item {
+  display: flex;
+  align-items: center;
+  gap: var(--p5r-spacing-md);
+  padding: var(--p5r-spacing-sm) var(--p5r-spacing-md);
+  border-radius: var(--p5r-radius-full);
+  color: var(--p5r-white);
+  text-decoration: none;
+  transition: background-color var(--p5r-duration-fast) var(--p5r-easing-sharp);
+}
+
+/* Collapsed state: center the icon */
+.galgame-sidebar--collapsed .galgame-sidebar__history-item {
+  justify-content: center;
+  padding: var(--p5r-spacing-sm);
+}
+
+.galgame-sidebar__history-item:hover {
+  background-color: var(--p5r-glass);
+}
+
+.galgame-sidebar__history-icon {
+  flex-shrink: 0;
+  font-size: 16px;
+}
+
+/* ===== Sidebar Bottom ===== */
+.galgame-sidebar__bottom {
+  padding: var(--p5r-spacing-md) var(--p5r-spacing-sm);
+  border-top: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--p5r-spacing-xs);
+}
+
+.galgame-sidebar__bottom-item {
+  display: flex;
+  align-items: center;
+  gap: var(--p5r-spacing-md);
+  padding: var(--p5r-spacing-md) var(--p5r-spacing-md);
+  border-radius: var(--p5r-radius-full);
+  color: var(--p5r-white);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font: var(--p5r-font-ui);
+  font-size: 14px;
+  transition: background-color var(--p5r-duration-fast) var(--p5r-easing-sharp);
+}
+
+/* Collapsed state: center the icon */
+.galgame-sidebar--collapsed .galgame-sidebar__bottom-item {
+  justify-content: center;
+  padding: var(--p5r-spacing-md);
+}
+
+.galgame-sidebar__bottom-item:hover {
+  background-color: var(--p5r-glass);
+}
+
+.galgame-sidebar__bottom-icon {
+  flex-shrink: 0;
+  font-size: 16px;
+}
+
 /* ===== Sidebar Header ===== */
 .galgame-sidebar__header {
   display: flex;
@@ -688,7 +871,7 @@
   justify-content: space-between;
   padding: var(--p5r-spacing-md) var(--p5r-spacing-lg);
   border-bottom: 2px solid var(--p5r-border);
-  background: rgba(100, 181, 246, 0.1);
+  background: rgba(255, 204, 179, 0.1);
 }
 
 .galgame-sidebar__title {
@@ -760,7 +943,7 @@
 }
 
 .galgame-sidebar__nav-item:hover {
-  background: rgba(100, 181, 246, 0.15);
+  background: rgba(255, 204, 179, 0.15);
 }
 
 .galgame-sidebar__nav-item:hover::before {

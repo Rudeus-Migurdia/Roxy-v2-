@@ -20,7 +20,6 @@ import {
   CharacterName,
   TextInput,
   LeftSidebar,
-  SidebarToggle,
 } from './components/galgame';
 
 // UI components
@@ -72,7 +71,7 @@ function App() {
   const [messageHistory, setMessageHistory] = useState<DialogState[]>([]);
 
   // Sidebar state
-  const { leftSidebarOpen } = useSidebarContext();
+  const { leftSidebarOpen, leftSidebarCollapsed } = useSidebarContext();
 
   // Refs
   const modelRef = useRef<any>(null);
@@ -259,7 +258,13 @@ function App() {
 
       {/* Live2D Character Layer */}
       <Live2DRenderer
-        className={`galgame-character-layer ${leftSidebarOpen ? 'galgame-character-layer--shift-right' : ''}`}
+        className={`galgame-character-layer ${
+          leftSidebarOpen
+            ? leftSidebarCollapsed
+              ? 'galgame-character-layer--shift-right-collapsed'
+              : 'galgame-character-layer--shift-right'
+            : ''
+        }`}
         config={config.modelConfig}
         onModelLoaded={handleModelLoaded}
         onError={handleLive2DError}
@@ -280,12 +285,17 @@ function App() {
       {/* Left Sidebar - Navigation */}
       <LeftSidebar />
 
-      {/* Sidebar Toggle Buttons */}
-      <SidebarToggle />
-
       {/* Dialog Section */}
       {live2dReady && (
-        <div className={`galgame-dialog-container ${leftSidebarOpen ? 'galgame-dialog-container--shift-right' : ''}`}>
+        <div
+          className={`galgame-dialog-container ${
+            leftSidebarOpen
+              ? leftSidebarCollapsed
+                ? 'galgame-dialog-container--shift-right-collapsed'
+                : 'galgame-dialog-container--shift-right'
+              : ''
+          }`}
+        >
           <CharacterName name={currentDialog?.speaker} />
           <DialogBox
             text={currentDialog?.text ?? 'Hello! I am Roxy. How can I help you today?'}
@@ -298,7 +308,13 @@ function App() {
         onSend={handleSendMessage}
         disabled={connectionState !== 'connected'}
         placeholder="Type a message..."
-        className={`${leftSidebarOpen ? 'galgame-input-container--shift-right' : ''}`}
+        className={`${
+          leftSidebarOpen
+            ? leftSidebarCollapsed
+              ? 'galgame-input-container--shift-right-collapsed'
+              : 'galgame-input-container--shift-right'
+            : ''
+        }`}
       />
     </GalgameLayout>
   );
@@ -306,7 +322,7 @@ function App() {
 
 function AppWithProviders() {
   return (
-    <SidebarProvider defaultLeftOpen={false} defaultRightOpen={false}>
+    <SidebarProvider defaultLeftOpen={true} defaultRightOpen={false} defaultLeftCollapsed={true}>
       <App />
     </SidebarProvider>
   );
