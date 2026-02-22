@@ -46,8 +46,9 @@ OPENAI_API_KEY=your_api_key
 # 可选
 NAKARI_API_ENABLED=true          # 启用 Live2D API
 NAKARI_API_HOST=127.0.0.1
-NAKARI_API_PORT=8000
-AUTO_SHUTDOWN_ON_DISCONNECT=true  # 关闭浏览器时自动退出后端
+NAKARI_API_PORT=8002
+AUTO_SHUTDOWN_ON_DISCONNECT=false  # 关闭浏览器时自动退出后端
+AUTO_SHUTDOWN_DELAY_SECONDS=30     # 自动关闭延迟时间（秒）
 NEO4J_URI=bolt://localhost:7687
 NEO4J_USER=neo4j
 NEO4J_PASSWORD=your_password
@@ -68,23 +69,20 @@ npm run dev
 ## 更新日志
 ### 待实现
 - 分辨率和窗口化适配
+- 设置内部功能实现
 - 对话历史记录功能
 - live2d模型一键切换按钮
 - 桌宠模式
 
-### v2.0.3 (2026-02-22)
-- **新增设置面板**：支持通用/Live2D/音频/高级设置，localStorage 持久化
-- **新增语音输入**：极简麦克风按钮，支持录音和实时音量监测
-- **UI 优化**：采用 Gemini 同款字体（Google Sans、Product Sans、Roboto）
-- **代码清理**：删除无用测试文件和未使用导入
-- **配置修复**：后端端口改为 8002
 
 ### v2.0.2 (2026-02-22)
 - 实现侧边栏
 - 优化按钮和边框样式
 - 优化布局，主视图智能避让
 - 采用流式布局
-
+- 新增设置面板，支持通用/Live2D/音频/高级设置
+- 新增语音输入
+- 优化自动关闭逻辑：默认关闭，延迟 30 秒，重连取消关闭
 
 ### v2.0.1 (2025-02-21)
 - 新增自动退出功能：关闭浏览器时后端自动退出

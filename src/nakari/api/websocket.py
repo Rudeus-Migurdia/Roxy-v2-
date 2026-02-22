@@ -23,16 +23,22 @@ class WebSocketManager:
     message filtering.
     """
 
-    def __init__(self, on_last_client_disconnect: Callable[[], Awaitable[None]] | None = None) -> None:
+    def __init__(
+        self,
+        on_last_client_disconnect: Callable[[], Awaitable[None]] | None = None,
+        on_client_connect: Callable[[], Awaitable[None]] | None = None,
+    ) -> None:
         """Initialize the WebSocket manager.
 
         Args:
             on_last_client_disconnect: Optional callback invoked when the last client disconnects
+            on_client_connect: Optional callback invoked when a new client connects
         """
         self._connections: Dict[str, WebSocket] = {}
         self._client_ids: Dict[WebSocket, str] = {}
         self._subscribers: Dict[str, Set[str]] = {}
         self._on_last_client_disconnect = on_last_client_disconnect
+        self._on_client_connect = on_client_connect
         self._log = _log
 
     async def connect(self, client_id: str, ws: WebSocket) -> None:
@@ -60,6 +66,10 @@ class WebSocketManager:
         )
 
         self._log.info("client_connected", client_id=client_id, total=len(self._connections))
+
+        # Trigger callback if this is a new connection
+        if self._on_client_connect:
+            asyncio.create_task(self._on_client_connect())
 
     def disconnect(self, client_id: str) -> None:
         """Disconnect a client.

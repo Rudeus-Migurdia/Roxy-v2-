@@ -71,6 +71,16 @@ async def run() -> None:
     ws_input = None
     shutdown_event = asyncio.Event()
 
+    # Helper function for delayed shutdown
+    async def _delayed_shutdown(event: asyncio.Event, delay_seconds: int) -> None:
+        """Wait for delay seconds before setting shutdown event."""
+        try:
+            await asyncio.sleep(delay_seconds)
+            log.info("shutdown_delay_completed")
+            event.set()
+        except asyncio.CancelledError:
+            log.info("shutdown_delay_canceled")
+
     if config.api_enabled:
         from nakari.api import get_ws_manager, run_api_server
         from nakari.api import app as api_app
@@ -83,15 +93,34 @@ async def run() -> None:
 
         log.info("live2d_api_enabled", host=config.api_host, port=config.api_port)
 
+        # Track shutdown task for cancellation on reconnect
+        shutdown_task: asyncio.Task[None] | None = None
+
         # Create shutdown callback for auto-shutdown on last client disconnect
         async def on_last_client_disconnect() -> None:
+            nonlocal shutdown_task
             if config.auto_shutdown_on_disconnect:
-                log.info("last_client_disconnected_initiating_shutdown")
-                shutdown_event.set()
+                log.info(
+                    "last_client_disconnected_scheduling_shutdown",
+                    delay_seconds=config.auto_shutdown_delay_seconds,
+                )
+                # Schedule shutdown after delay
+                shutdown_task = asyncio.create_task(
+                    _delayed_shutdown(shutdown_event, config.auto_shutdown_delay_seconds)
+                )
 
-        # Get WebSocket manager with shutdown callback
+        # Create callback for client connect to cancel pending shutdown
+        async def on_client_connect() -> None:
+            nonlocal shutdown_task
+            if shutdown_task and not shutdown_task.done():
+                log.info("client_connected_canceling_shutdown")
+                shutdown_task.cancel()
+                shutdown_task = None
+
+        # Get WebSocket manager with shutdown callbacks
         ws_manager: WebSocketManager = get_ws_manager(
-            on_last_client_disconnect=on_last_client_disconnect
+            on_last_client_disconnect=on_last_client_disconnect,
+            on_client_connect=on_client_connect,
         )
 
         # Create multi-output handler
