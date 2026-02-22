@@ -20,6 +20,7 @@ import {
   CharacterName,
   TextInput,
   LeftSidebar,
+  MainViewContainer,
 } from './components/galgame';
 
 // UI components
@@ -256,19 +257,39 @@ function App() {
       {/* Background Layer */}
       <BackgroundLayer />
 
-      {/* Live2D Character Layer */}
-      <Live2DRenderer
-        className={`galgame-character-layer ${
-          leftSidebarOpen
-            ? leftSidebarCollapsed
-              ? 'galgame-character-layer--shift-right-collapsed'
-              : 'galgame-character-layer--shift-right'
-            : ''
-        }`}
-        config={config.modelConfig}
-        onModelLoaded={handleModelLoaded}
-        onError={handleLive2DError}
-      />
+      {/* Left Sidebar - Navigation */}
+      <LeftSidebar />
+
+      {/* Main View Container - shifts as a unit when sidebar opens */}
+      <MainViewContainer
+        sidebarOpen={leftSidebarOpen}
+        sidebarCollapsed={leftSidebarCollapsed}
+      >
+        {/* Live2D Character Layer */}
+        <Live2DRenderer
+          className="galgame-character-layer"
+          config={config.modelConfig}
+          onModelLoaded={handleModelLoaded}
+          onError={handleLive2DError}
+        />
+
+        {/* Dialog Section */}
+        {live2dReady && (
+          <div className="galgame-dialog-container">
+            <CharacterName name={currentDialog?.speaker} />
+            <DialogBox
+              text={currentDialog?.text ?? 'Hello! I am Roxy. How can I help you today?'}
+            />
+          </div>
+        )}
+
+        {/* Input Area */}
+        <TextInput
+          onSend={handleSendMessage}
+          disabled={connectionState !== 'connected'}
+          placeholder="Type a message..."
+        />
+      </MainViewContainer>
 
       {/* P5R Transition Overlay */}
       {transition && (
@@ -281,41 +302,6 @@ function App() {
       <header className="galgame-header">
         <StatusIndicator connectionState={connectionState} live2dReady={live2dReady} />
       </header>
-
-      {/* Left Sidebar - Navigation */}
-      <LeftSidebar />
-
-      {/* Dialog Section */}
-      {live2dReady && (
-        <div
-          className={`galgame-dialog-container ${
-            leftSidebarOpen
-              ? leftSidebarCollapsed
-                ? 'galgame-dialog-container--shift-right-collapsed'
-                : 'galgame-dialog-container--shift-right'
-              : ''
-          }`}
-        >
-          <CharacterName name={currentDialog?.speaker} />
-          <DialogBox
-            text={currentDialog?.text ?? 'Hello! I am Roxy. How can I help you today?'}
-          />
-        </div>
-      )}
-
-      {/* Input Area */}
-      <TextInput
-        onSend={handleSendMessage}
-        disabled={connectionState !== 'connected'}
-        placeholder="Type a message..."
-        className={`${
-          leftSidebarOpen
-            ? leftSidebarCollapsed
-              ? 'galgame-input-container--shift-right-collapsed'
-              : 'galgame-input-container--shift-right'
-            : ''
-        }`}
-      />
     </GalgameLayout>
   );
 }

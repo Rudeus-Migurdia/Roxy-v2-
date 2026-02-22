@@ -12,3 +12,4 @@ export { ChoiceButtons } from './ChoiceButtons';
 export { ChatBubble } from './ChatBubble';
 export { ChatHistory } from './ChatHistory';
 export { LeftSidebar } from './LeftSidebar';
+export { MainViewContainer } from './MainViewContainer';
