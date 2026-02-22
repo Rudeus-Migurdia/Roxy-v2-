@@ -19,10 +19,10 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
   const [showExport, setShowExport] = useState(false);
 
   const tabs: Array<{ key: TabType; label: string; icon: string }> = [
-    { key: 'general', label: 'General', icon: '⚙️' },
-    { key: 'live2d', label: 'Live2D', icon: '🎭' },
-    { key: 'audio', label: 'Audio', icon: '🔊' },
-    { key: 'advanced', label: 'Advanced', icon: '🔧' },
+    { key: 'general', label: 'General', icon: '⚙' },
+    { key: 'live2d', label: 'Live2D', icon: '◆' },
+    { key: 'audio', label: 'Audio', icon: '♪' },
+    { key: 'advanced', label: 'Advanced', icon: '⋮' },
   ];
 
   const handleExport = () => {
@@ -84,7 +84,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
         <div className="settings-content">
           {activeTab === 'general' && (
             <div className="settings-section">
-              <h3 className="section-title">General Settings</h3>
+              <h3 className="section-title">General</h3>
 
               {/* Theme */}
               <div className="setting-item">
@@ -131,7 +131,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
 
           {activeTab === 'live2d' && (
             <div className="settings-section">
-              <h3 className="section-title">Live2D Settings</h3>
+              <h3 className="section-title">Live2D</h3>
 
               {/* Model Scale */}
               <div className="setting-item">
@@ -205,7 +205,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
 
           {activeTab === 'audio' && (
             <div className="settings-section">
-              <h3 className="section-title">Audio Settings</h3>
+              <h3 className="section-title">Audio</h3>
 
               {/* TTS Volume */}
               <div className="setting-item">
@@ -265,7 +265,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
 
           {activeTab === 'advanced' && (
             <div className="settings-section">
-              <h3 className="section-title">Advanced Settings</h3>
+              <h3 className="section-title">Advanced</h3>
 
               {/* Debug Mode */}
               <div className="setting-item">
