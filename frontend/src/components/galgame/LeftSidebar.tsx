@@ -3,6 +3,7 @@
  */
 
 import { useSidebarContext } from '../../contexts/SidebarContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface NavItem {
   id: string;
@@ -32,6 +33,7 @@ export function LeftSidebar({
   onSettingsClick,
 }: LeftSidebarProps) {
   const { leftSidebarOpen, leftSidebarCollapsed, toggleLeftSidebar, toggleLeftSidebarCollapse } = useSidebarContext();
+  const { t } = useLanguage();
 
   return (
     <aside
@@ -74,14 +76,14 @@ export function LeftSidebar({
             <line x1="4.93" y1="19.07" x2="7.76" y2="16.24" />
             <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" />
           </svg>
-          <span className="galgame-sidebar__text">新对话</span>
+          <span className="galgame-sidebar__text">{t.newChat}</span>
         </button>
       </div>
 
       {/* Chat history list */}
       <div className="galgame-sidebar__history">
         {!leftSidebarCollapsed && (
-          <div className="galgame-sidebar__history-title">近期记录</div>
+          <div className="galgame-sidebar__history-title">{t.recentHistory}</div>
         )}
         {chatHistory.map((chat) => (
           <a
@@ -99,7 +101,7 @@ export function LeftSidebar({
       <div className="galgame-sidebar__bottom">
         <button className="galgame-sidebar__bottom-item" onClick={onSettingsClick}>
           <span className="galgame-sidebar__bottom-icon">⚙</span>
-          <span className="galgame-sidebar__text">设置</span>
+          <span className="galgame-sidebar__text">{t.settings}</span>
         </button>
       </div>
     </aside>

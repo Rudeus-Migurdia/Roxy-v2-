@@ -4,6 +4,7 @@
 
 import { useState } from 'react';
 import { useSettings, type AppSettings } from '../../contexts/SettingsContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface SettingsPanelProps {
   onClose: () => void;
@@ -13,16 +14,17 @@ type TabType = 'general' | 'live2d' | 'audio' | 'advanced';
 
 export function SettingsPanel({ onClose }: SettingsPanelProps) {
   const { settings, updateLive2DSettings, updateAudioSettings, updateGeneralSettings, updateAdvancedSettings, resetSettings, exportSettings, importSettings } = useSettings();
+  const { language, setLanguage, t } = useLanguage();
   const [activeTab, setActiveTab] = useState<TabType>('general');
   const [exportData, setExportData] = useState<string>('');
   const [importData, setImportData] = useState<string>('');
   const [showExport, setShowExport] = useState(false);
 
   const tabs: Array<{ key: TabType; label: string; icon: string }> = [
-    { key: 'general', label: 'General', icon: '⚙' },
-    { key: 'live2d', label: 'Live2D', icon: '◆' },
-    { key: 'audio', label: 'Audio', icon: '♪' },
-    { key: 'advanced', label: 'Advanced', icon: '⋮' },
+    { key: 'general', label: t.general, icon: '⚙' },
+    { key: 'live2d', label: t.live2d, icon: '◆' },
+    { key: 'audio', label: t.audio, icon: '♪' },
+    { key: 'advanced', label: t.advanced, icon: '⋮' },
   ];
 
   const handleExport = () => {
@@ -58,7 +60,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
       <div className="settings-panel" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="settings-header">
-          <h2 className="settings-title">Settings</h2>
+          <h2 className="settings-title">{t.settings}</h2>
           <button className="settings-close-button" onClick={onClose} aria-label="Close settings">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -84,28 +86,32 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
         <div className="settings-content">
           {activeTab === 'general' && (
             <div className="settings-section">
-              <h3 className="section-title">General</h3>
+              <h3 className="section-title">{t.general}</h3>
 
               {/* Theme */}
               <div className="setting-item">
-                <label className="setting-label">Theme</label>
+                <label className="setting-label">{t.theme}</label>
                 <select
                   className="setting-select"
                   value={settings.general.theme}
                   onChange={(e) => updateGeneralSettings({ theme: e.target.value as any })}
                 >
-                  <option value="light">Light</option>
-                  <option value="dark">Dark</option>
+                  <option value="light">{t.light}</option>
+                  <option value="dark">{t.dark}</option>
                 </select>
               </div>
 
               {/* Language */}
               <div className="setting-item">
-                <label className="setting-label">Language</label>
+                <label className="setting-label">{t.language}</label>
                 <select
                   className="setting-select"
                   value={settings.general.language}
-                  onChange={(e) => updateGeneralSettings({ language: e.target.value as any })}
+                  onChange={(e) => {
+                    const newLang = e.target.value as 'en' | 'zh' | 'ja';
+                    updateGeneralSettings({ language: newLang });
+                    setLanguage(newLang);
+                  }}
                 >
                   <option value="en">English</option>
                   <option value="zh">中文</option>
@@ -115,7 +121,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
 
               {/* Auto Scroll Chat */}
               <div className="setting-item">
-                <label className="setting-label">Auto Scroll Chat</label>
+                <label className="setting-label">{t.autoScrollChat}</label>
                 <label className="setting-toggle">
                   <input
                     type="checkbox"
@@ -130,11 +136,11 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
 
           {activeTab === 'live2d' && (
             <div className="settings-section">
-              <h3 className="section-title">Live2D</h3>
+              <h3 className="section-title">{t.live2d}</h3>
 
               {/* Model Scale */}
               <div className="setting-item">
-                <label className="setting-label">Model Scale: {settings.live2d.modelScale.toFixed(1)}x</label>
+                <label className="setting-label">{t.modelScale}: {t.modelScaleValue(settings.live2d.modelScale.toFixed(1))}</label>
                 <input
                   type="range"
                   className="setting-slider"
@@ -148,7 +154,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
 
               {/* Position X */}
               <div className="setting-item">
-                <label className="setting-label">Position X: {settings.live2d.positionX}px</label>
+                <label className="setting-label">{t.positionX}: {t.positionValue(settings.live2d.positionX)}</label>
                 <input
                   type="range"
                   className="setting-slider"
@@ -162,7 +168,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
 
               {/* Position Y */}
               <div className="setting-item">
-                <label className="setting-label">Position Y: {settings.live2d.positionY}px</label>
+                <label className="setting-label">{t.positionY}: {t.positionValue(settings.live2d.positionY)}</label>
                 <input
                   type="range"
                   className="setting-slider"
@@ -176,7 +182,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
 
               {/* Idle Motion */}
               <div className="setting-item">
-                <label className="setting-label">Idle Motion</label>
+                <label className="setting-label">{t.idleMotion}</label>
                 <label className="setting-toggle">
                   <input
                     type="checkbox"
@@ -189,7 +195,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
 
               {/* Breathing Animation */}
               <div className="setting-item">
-                <label className="setting-label">Breathing Animation</label>
+                <label className="setting-label">{t.breathingAnimation}</label>
                 <label className="setting-toggle">
                   <input
                     type="checkbox"
@@ -204,11 +210,11 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
 
           {activeTab === 'audio' && (
             <div className="settings-section">
-              <h3 className="section-title">Audio</h3>
+              <h3 className="section-title">{t.audio}</h3>
 
               {/* TTS Volume */}
               <div className="setting-item">
-                <label className="setting-label">TTS Volume: {Math.round(settings.audio.ttsVolume * 100)}%</label>
+                <label className="setting-label">{t.ttsVolume}: {t.volumeValue(Math.round(settings.audio.ttsVolume * 100))}</label>
                 <input
                   type="range"
                   className="setting-slider"
@@ -222,7 +228,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
 
               {/* Mic Sensitivity */}
               <div className="setting-item">
-                <label className="setting-label">Mic Sensitivity: {Math.round(settings.audio.micSensitivity * 100)}%</label>
+                <label className="setting-label">{t.micSensitivity}: {t.volumeValue(Math.round(settings.audio.micSensitivity * 100))}</label>
                 <input
                   type="range"
                   className="setting-slider"
@@ -236,7 +242,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
 
               {/* Lip Sync */}
               <div className="setting-item">
-                <label className="setting-label">Lip Sync</label>
+                <label className="setting-label">{t.lipSync}</label>
                 <label className="setting-toggle">
                   <input
                     type="checkbox"
@@ -249,7 +255,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
 
               {/* Enable Audio */}
               <div className="setting-item">
-                <label className="setting-label">Enable Audio</label>
+                <label className="setting-label">{t.enableAudio}</label>
                 <label className="setting-toggle">
                   <input
                     type="checkbox"
@@ -264,11 +270,11 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
 
           {activeTab === 'advanced' && (
             <div className="settings-section">
-              <h3 className="section-title">Advanced</h3>
+              <h3 className="section-title">{t.advanced}</h3>
 
               {/* Debug Mode */}
               <div className="setting-item">
-                <label className="setting-label">Debug Mode</label>
+                <label className="setting-label">{t.debugMode}</label>
                 <label className="setting-toggle">
                   <input
                     type="checkbox"
@@ -281,7 +287,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
 
               {/* Show Thoughts */}
               <div className="setting-item">
-                <label className="setting-label">Show AI Thoughts</label>
+                <label className="setting-label">{t.showAIThoughts}</label>
                 <label className="setting-toggle">
                   <input
                     type="checkbox"
@@ -294,12 +300,12 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
 
               {/* Data Management */}
               <div className="setting-group">
-                <h4 className="group-title">Data Management</h4>
+                <h4 className="group-title">{t.dataManagement}</h4>
 
                 {/* Export */}
                 <div className="setting-item">
                   <button className="setting-button" onClick={handleExport}>
-                    Export Settings
+                    {t.exportSettings}
                   </button>
                 </div>
 
@@ -313,7 +319,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
                       rows={5}
                     />
                     <button className="setting-button secondary" onClick={copyToClipboard}>
-                      Copy to Clipboard
+                      {t.copyToClipboard}
                     </button>
                   </div>
                 )}
@@ -327,14 +333,14 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
                     rows={5}
                   />
                   <button className="setting-button secondary" onClick={handleImport}>
-                    Import Settings
+                    {t.importSettings}
                   </button>
                 </div>
 
                 {/* Reset */}
                 <div className="setting-item">
                   <button className="setting-button danger" onClick={handleReset}>
-                    Reset to Defaults
+                    {t.resetToDefaults}
                   </button>
                 </div>
               </div>

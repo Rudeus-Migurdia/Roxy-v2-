@@ -5,6 +5,7 @@
 
 import { useState, useRef } from 'react';
 import { VoiceInputButton } from '../voice/VoiceInputButton';
+import { useLanguage } from '../../contexts/LanguageContext';
 import type { WSMessage, WSMessageType } from '../../types';
 
 interface TextInputProps {
@@ -18,13 +19,17 @@ interface TextInputProps {
 export function TextInput({
   onSend,
   disabled = false,
-  placeholder = 'Type a message...',
+  placeholder,
   className = '',
   wsSend,
 }: TextInputProps) {
+  const { t } = useLanguage();
   const [text, setText] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const [isRecording, setIsRecording] = useState(false);
+
+  // Use translated placeholder as default
+  const inputPlaceholder = placeholder ?? t.typeMessage;
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && text.trim()) {
@@ -93,7 +98,7 @@ export function TextInput({
         ref={inputRef}
         type="text"
         className="galgame-input"
-        placeholder={isRecording ? '录音中...' : placeholder}
+        placeholder={isRecording ? t.recording : inputPlaceholder}
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={handleKeyDown}
@@ -105,7 +110,7 @@ export function TextInput({
         onClick={handleSend}
         disabled={disabled || !text.trim() || isRecording}
       >
-        Send
+        {t.send}
       </button>
     </div>
   );

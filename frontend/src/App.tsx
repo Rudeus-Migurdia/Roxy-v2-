@@ -32,6 +32,7 @@ import { SettingsPanel } from './components/settings';
 // Context providers
 import { SidebarProvider, useSidebarContext } from './contexts/SidebarContext';
 import { SettingsProvider } from './contexts/SettingsContext';
+import { LanguageProvider } from './contexts/LanguageContext';
 
 // Error Boundary
 class ErrorBoundary extends Component<{children: ReactNode}, {hasError: boolean, error: any}> {
@@ -293,7 +294,6 @@ function App() {
           onSend={handleSendMessage}
           wsSend={sendMessage}
           disabled={connectionState !== 'connected'}
-          placeholder="Type a message..."
         />
       </MainViewContainer>
 
@@ -317,11 +317,13 @@ function App() {
 
 function AppWithProviders() {
   return (
-    <SettingsProvider>
-      <SidebarProvider defaultLeftOpen={true} defaultRightOpen={false} defaultLeftCollapsed={true}>
-        <App />
-      </SidebarProvider>
-    </SettingsProvider>
+    <LanguageProvider>
+      <SettingsProvider>
+        <SidebarProvider defaultLeftOpen={true} defaultRightOpen={false} defaultLeftCollapsed={true}>
+          <App />
+        </SidebarProvider>
+      </SettingsProvider>
+    </LanguageProvider>
   );
 }
 
