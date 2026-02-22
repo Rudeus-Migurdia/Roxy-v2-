@@ -54,7 +54,7 @@ const defaultSettings: AppSettings = {
     enableAudio: true,
   },
   general: {
-    theme: 'p5r',
+    theme: 'dark',
     language: 'en',
     autoScrollChat: true,
   },

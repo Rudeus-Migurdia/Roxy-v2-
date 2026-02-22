@@ -94,7 +94,6 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
                   value={settings.general.theme}
                   onChange={(e) => updateGeneralSettings({ theme: e.target.value as any })}
                 >
-                  <option value="p5r">P5R (Persona 5 Royal)</option>
                   <option value="light">Light</option>
                   <option value="dark">Dark</option>
                 </select>
