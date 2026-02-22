@@ -135,5 +135,5 @@ class Config:
             api_host=os.getenv("NAKARI_API_HOST", "127.0.0.1"),
             api_port=safe_int(os.getenv("NAKARI_API_PORT"), 8002, min_value=1, max_value=65535),
             auto_shutdown_on_disconnect=os.getenv("AUTO_SHUTDOWN_ON_DISCONNECT", "false").lower() == "true",
-            auto_shutdown_delay_seconds=safe_int(os.getenv("AUTO_SHUTDOWN_DELAY_SECONDS"), "30", min_value=5, max_value=300),
+            auto_shutdown_delay_seconds=safe_int(os.getenv("AUTO_SHUTDOWN_DELAY_SECONDS"), 30, min_value=5, max_value=300),
         )

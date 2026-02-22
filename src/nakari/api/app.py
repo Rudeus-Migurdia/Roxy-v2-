@@ -149,16 +149,23 @@ def create_app() -> FastAPI:
     return app
 
 
-def get_ws_manager(on_last_client_disconnect: Callable[[], Awaitable[None]] | None = None) -> WebSocketManager:
+def get_ws_manager(
+    on_last_client_disconnect: Callable[[], Awaitable[None]] | None = None,
+    on_client_connect: Callable[[], Awaitable[None]] | None = None,
+) -> WebSocketManager:
     """Get the global WebSocket manager instance.
 
     Args:
         on_last_client_disconnect: Optional callback when last client disconnects
+        on_client_connect: Optional callback when a new client connects
 
     Returns:
         WebSocketManager instance
     """
     global ws_manager
     if ws_manager is None:
-        ws_manager = WebSocketManager(on_last_client_disconnect=on_last_client_disconnect)
+        ws_manager = WebSocketManager(
+            on_last_client_disconnect=on_last_client_disconnect,
+            on_client_connect=on_client_connect,
+        )
     return ws_manager
