@@ -11,3 +11,5 @@ export { TextInput } from './TextInput';
 export { ChoiceButtons } from './ChoiceButtons';
 export { ChatBubble } from './ChatBubble';
 export { ChatHistory } from './ChatHistory';
+export { LeftSidebar } from './LeftSidebar';
+export { SidebarToggle } from './SidebarToggle';

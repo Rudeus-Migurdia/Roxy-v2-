@@ -19,11 +19,15 @@ import {
   DialogBox,
   CharacterName,
   TextInput,
-  ChatHistory,
+  LeftSidebar,
+  SidebarToggle,
 } from './components/galgame';
 
 // UI components
-import { MenuButton, StatusIndicator } from './components/ui';
+import { StatusIndicator } from './components/ui';
+
+// Context providers
+import { SidebarProvider, useSidebarContext } from './contexts/SidebarContext';
 
 // Error Boundary
 class ErrorBoundary extends Component<{children: ReactNode}, {hasError: boolean, error: any}> {
@@ -67,10 +71,12 @@ function App() {
   const [live2dReady, setLive2dReady] = useState(false);
   const [messageHistory, setMessageHistory] = useState<DialogState[]>([]);
 
+  // Sidebar state
+  const { leftSidebarOpen } = useSidebarContext();
+
   // Refs
   const modelRef = useRef<any>(null);
   const audioProcessorRef = useRef<AudioProcessor | null>(null);
-  const chatContainerRef = useRef<HTMLDivElement>(null);
   const modelRefCallback = useRef(modelRef);
   const audioProcessorRefCallback = useRef(audioProcessorRef);
   modelRefCallback.current = modelRef;
@@ -246,13 +252,6 @@ function App() {
     console.error('Live2D error:', error);
   }, []);
 
-  // Auto-scroll chat to bottom when new messages arrive
-  useEffect(() => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-    }
-  }, [messageHistory]);
-
   return (
     <GalgameLayout>
       {/* Background Layer */}
@@ -260,7 +259,7 @@ function App() {
 
       {/* Live2D Character Layer */}
       <Live2DRenderer
-        className="galgame-character-layer"
+        className={`galgame-character-layer ${leftSidebarOpen ? 'galgame-character-layer--shift-right' : ''}`}
         config={config.modelConfig}
         onModelLoaded={handleModelLoaded}
         onError={handleLive2DError}
@@ -273,23 +272,20 @@ function App() {
         </div>
       )}
 
-      {/* Header with Menu and Status */}
+      {/* Header with Status */}
       <header className="galgame-header">
-        <MenuButton onClick={() => console.log('Menu clicked')}>
-          MENU
-        </MenuButton>
         <StatusIndicator connectionState={connectionState} live2dReady={live2dReady} />
       </header>
 
-      {/* Chat History */}
-      <ChatHistory
-        messages={messageHistory}
-        containerRef={chatContainerRef}
-      />
+      {/* Left Sidebar - Navigation */}
+      <LeftSidebar />
+
+      {/* Sidebar Toggle Buttons */}
+      <SidebarToggle />
 
       {/* Dialog Section */}
       {live2dReady && (
-        <div className="galgame-dialog-container">
+        <div className={`galgame-dialog-container ${leftSidebarOpen ? 'galgame-dialog-container--shift-right' : ''}`}>
           <CharacterName name={currentDialog?.speaker} />
           <DialogBox
             text={currentDialog?.text ?? 'Hello! I am Roxy. How can I help you today?'}
@@ -302,15 +298,24 @@ function App() {
         onSend={handleSendMessage}
         disabled={connectionState !== 'connected'}
         placeholder="Type a message..."
+        className={`${leftSidebarOpen ? 'galgame-input-container--shift-right' : ''}`}
       />
     </GalgameLayout>
+  );
+}
+
+function AppWithProviders() {
+  return (
+    <SidebarProvider defaultLeftOpen={false} defaultRightOpen={false}>
+      <App />
+    </SidebarProvider>
   );
 }
 
 export default function AppWithErrorBoundary() {
   return (
     <ErrorBoundary>
-      <App />
+      <AppWithProviders />
     </ErrorBoundary>
   );
 }
