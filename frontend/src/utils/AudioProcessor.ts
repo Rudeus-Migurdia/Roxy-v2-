@@ -7,6 +7,7 @@ export class AudioProcessor {
   private analyser: AnalyserNode | null = null;
   private currentSource: AudioBufferSourceNode | null = null;
   private isPlaying = false;
+  private animationFrameId: number | null = null;
 
   // Lip-sync parameters
   private mouthParam = 0; // 0.0 - 1.0
@@ -122,9 +123,9 @@ export class AudioProcessor {
     // Notify callback
     this.onMouthParamChange?.(this.mouthParam);
 
-    // Continue animation
+    // Continue animation - store the frame ID for cancellation
     if (this.isPlaying) {
-      requestAnimationFrame(() => this.updateLipSync());
+      this.animationFrameId = requestAnimationFrame(() => this.updateLipSync());
     }
   }
 
@@ -132,6 +133,13 @@ export class AudioProcessor {
    * Stop current audio playback
    */
   stop(): void {
+    // Cancel any pending animation frame first
+    if (this.animationFrameId !== null) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+    }
+
+    // Stop audio source
     if (this.currentSource) {
       try {
         this.currentSource.stop();

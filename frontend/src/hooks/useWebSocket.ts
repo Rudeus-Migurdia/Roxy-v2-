@@ -41,8 +41,12 @@ export function useWebSocket(
   const latestOptionsRef = useRef<UseWebSocketOptions>(options);
 
   const connect = useCallback(() => {
-    if (wsRef.current?.readyState === WebSocket.OPEN ||
-        wsRef.current?.readyState === WebSocket.CONNECTING) {
+    // Check if a connection is already in progress or active
+    const currentState = wsRef.current?.readyState;
+    if (currentState === WebSocket.OPEN ||
+        currentState === WebSocket.CONNECTING ||
+        currentState === WebSocket.CLOSING) {
+      console.log('[useWebSocket] Connection already in progress, current state:', currentState);
       return;
     }
 
@@ -160,15 +164,20 @@ export function useWebSocket(
 
   const sendMessage = useCallback(
     (type: WSMessageType, data: unknown) => {
-      if (wsRef.current?.readyState === WebSocket.OPEN) {
+      const ws = wsRef.current;
+      if (!ws) {
+        console.warn('[useWebSocket] Cannot send message: WebSocket is null');
+        return;
+      }
+      if (ws.readyState === WebSocket.OPEN) {
         // Backend expects "payload" field for user_text messages
         const message: WSMessage = type === 'user_text'
           ? { type, payload: data, timestamp: Date.now() }
           : { type, data, timestamp: Date.now() };
         console.log('[useWebSocket] Sending:', message);
-        wsRef.current.send(JSON.stringify(message));
+        ws.send(JSON.stringify(message));
       } else {
-        console.warn('[useWebSocket] Cannot send message: WebSocket not connected, state:', wsRef.current?.readyState);
+        console.warn('[useWebSocket] Cannot send message: WebSocket not connected, state:', ws.readyState);
       }
     },
     []

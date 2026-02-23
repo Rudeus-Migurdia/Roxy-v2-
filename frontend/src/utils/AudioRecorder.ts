@@ -191,6 +191,12 @@ export class AudioRecorder {
       return;
     }
 
+    // Cancel any existing animation frame before starting new one
+    if (this.animationFrameId !== null) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+    }
+
     const dataArray = new Uint8Array(this.analyser.frequencyBinCount);
 
     const updateLevel = () => {
@@ -243,9 +249,16 @@ export class AudioRecorder {
 
     this.analyser = null;
 
-    // 停止媒体流
+    // 停止媒体流 - 安全停止每个 track
     if (this.stream) {
-      this.stream.getTracks().forEach(track => track.stop());
+      const tracks = this.stream.getTracks();
+      for (const track of tracks) {
+        try {
+          track.stop();
+        } catch (e) {
+          console.warn('[AudioRecorder] Failed to stop track:', e);
+        }
+      }
       this.stream = null;
     }
 

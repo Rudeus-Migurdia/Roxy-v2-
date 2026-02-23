@@ -26,7 +26,9 @@ export function StatusIndicator({
       case 'disconnected':
         return 'error';
       default:
-        return '';
+        // Treat unknown states as errors
+        console.warn('[StatusIndicator] Unknown connection state:', connectionState);
+        return 'error';
     }
   };
 
@@ -43,7 +45,7 @@ export function StatusIndicator({
       case 'error':
         return 'Connection Error';
       default:
-        return connectionState;
+        return 'Unknown State';
     }
   };
 

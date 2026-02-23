@@ -47,6 +47,12 @@ export function VoiceInputButton({
 
   // 更新计时器
   useEffect(() => {
+    // Clear any existing timer first
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
     if (recordingState.isRecording) {
       timerRef.current = setInterval(() => {
         setRecordingState(prev => ({
@@ -54,16 +60,13 @@ export function VoiceInputButton({
           duration: prev.duration + 0.1,
         }));
       }, 100);
-    } else {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
     }
 
+    // Cleanup function
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
+        timerRef.current = null;
       }
     };
   }, [recordingState.isRecording]);

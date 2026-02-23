@@ -2,7 +2,7 @@
  * RightSidebar - Chat history sidebar with P5R styling
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useSidebarContext } from '../../contexts/SidebarContext';
 import { useSettings } from '../../contexts/SettingsContext';
 import type { DialogState } from '../../types';
@@ -16,13 +16,29 @@ export function RightSidebar({ messages }: RightSidebarProps) {
   const { rightSidebarOpen, toggleRightSidebar } = useSidebarContext();
   const { settings } = useSettings();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const isUserScrollingRef = useRef(false);
 
-  // Auto-scroll to bottom when new messages arrive (respects user setting)
+  // Check if user is near bottom (within 100px)
+  const isNearBottom = useCallback((): boolean => {
+    const element = scrollRef.current;
+    if (!element) return true;
+    return element.scrollHeight - element.scrollTop - element.clientHeight < 100;
+  }, []);
+
+  // Auto-scroll to bottom when new messages arrive (respects user setting and manual scroll)
   useEffect(() => {
     if (scrollRef.current && rightSidebarOpen && settings.general.autoScrollChat) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      // Only auto-scroll if user hasn't manually scrolled up
+      if (isNearBottom() || messages.length === 0) {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }
     }
-  }, [messages, rightSidebarOpen, settings.general.autoScrollChat]);
+  }, [messages, rightSidebarOpen, settings.general.autoScrollChat, isNearBottom]);
+
+  // Detect user manual scrolling
+  const handleScroll = useCallback(() => {
+    isUserScrollingRef.current = !isNearBottom();
+  }, [isNearBottom]);
 
   return (
     <aside className={`galgame-sidebar galgame-sidebar--right ${rightSidebarOpen ? 'galgame-sidebar--open' : ''}`}>
@@ -39,7 +55,7 @@ export function RightSidebar({ messages }: RightSidebarProps) {
       </div>
 
       {/* Chat Messages */}
-      <div ref={scrollRef} className="galgame-sidebar__content">
+      <div ref={scrollRef} className="galgame-sidebar__content" onScroll={handleScroll}>
         {messages.length === 0 ? (
           <div className="galgame-sidebar__empty">
             <div className="galgame-sidebar__empty-icon">💬</div>
