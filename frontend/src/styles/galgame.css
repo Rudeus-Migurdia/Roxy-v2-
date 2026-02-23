@@ -9,7 +9,7 @@
   height: 100vh;
   position: relative;
   overflow: hidden;
-  background: var(--p5r-black);
+  background: var(--theme-bg);
 }
 
 /* ===== Main View Container ===== */
@@ -58,10 +58,11 @@
   height: 100%;
   background: linear-gradient(
     135deg,
-    rgba(10, 10, 10, 0.3) 0%,
-    rgba(10, 10, 10, 0.1) 50%,
-    rgba(10, 10, 10, 0.5) 100%
+    var(--theme-shadow) 0%,
+    transparent 50%,
+    var(--theme-shadow) 100%
   );
+  opacity: 0.3;
 }
 
 /* ===== Live2D Character Layer ===== */
@@ -119,7 +120,7 @@
   z-index: var(--p5r-z-control-panel);
   background: linear-gradient(
     to bottom,
-    rgba(10, 10, 10, 0.8) 0%,
+    var(--theme-shadow) 0%,
     transparent 100%
   );
 }
@@ -249,8 +250,8 @@
 .galgame-character-name {
   display: inline-block;
   padding: var(--p5r-spacing-sm) var(--p5r-spacing-md);
-  background: var(--p5r-dialog-name-tag);
-  color: var(--p5r-white);
+  background: var(--theme-accent);
+  color: var(--theme-bg);
   font: var(--p5r-font-ui);
   font-size: var(--p5r-font-size-ui);
   font-weight: bold;
@@ -275,9 +276,9 @@
 .galgame-dialog-box {
   position: relative;
   padding: var(--p5r-spacing-lg) var(--p5r-spacing-xl);
-  background: var(--p5r-dialog-bg);
-  border: 2px solid var(--p5r-dialog-border);
-  color: var(--p5r-dialog-text);
+  background: var(--theme-surface);
+  border: 2px solid var(--theme-border);
+  color: var(--theme-text);
   font: var(--p5r-font-dialog);
   font-size: var(--p5r-font-size-dialog);
   line-height: 1.6;
@@ -404,10 +405,10 @@
 .galgame-input {
   flex: 1;
   padding: var(--p5r-spacing-md) var(--p5r-spacing-lg);
-  border: 2px solid var(--p5r-border);
+  border: 2px solid var(--theme-input-border);
   border-radius: var(--p5r-radius-full);
-  background: var(--p5r-glass);
-  color: var(--p5r-white);
+  background: var(--theme-input-bg);
+  color: var(--theme-text);
   font: var(--p5r-font-ui);
   font-size: 14px;
   outline: none;
@@ -416,12 +417,12 @@
 }
 
 .galgame-input::placeholder {
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--theme-text-secondary);
 }
 
 .galgame-input:focus {
-  border-color: var(--p5r-red);
-  box-shadow: 0 0 10px rgba(230, 57, 70, 0.3);
+  border-color: var(--theme-accent);
+  box-shadow: 0 0 10px var(--theme-shadow);
 }
 
 .galgame-input:disabled {
@@ -433,8 +434,8 @@
   padding: var(--p5r-spacing-md) var(--p5r-spacing-xl);
   border: none;
   border-radius: var(--p5r-radius-full);
-  background: linear-gradient(135deg, var(--p5r-red), var(--p5r-red-dark));
-  color: var(--p5r-white);
+  background: var(--theme-accent);
+  color: var(--theme-bg);
   font: var(--p5r-font-ui);
   font-size: var(--p5r-font-size-ui);
   font-weight: bold;
@@ -689,8 +690,8 @@
   top: 0;
   bottom: 0;
   width: 9vw;
-  background: var(--p5r-overlay);
-  border-right: 1px solid var(--p5r-border);
+  background: var(--theme-surface);
+  border-right: 1px solid var(--theme-border);
   backdrop-filter: blur(20px);
   z-index: calc(var(--p5r-z-control-panel) + 1);
   display: flex;
@@ -712,6 +713,7 @@
   left: auto;
   transform: translateX(100%);
   border-right: none;
+  border-left: 1px solid var(--theme-border);
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
 }
@@ -748,14 +750,14 @@
   background: transparent;
   border: none;
   border-radius: var(--p5r-radius-full);
-  color: var(--p5r-white);
+  color: var(--theme-text);
   cursor: pointer;
   margin-left: -0.5vw;
   transition: background-color var(--p5r-duration-fast) var(--p5r-easing-sharp);
 }
 
 .galgame-sidebar__toggle-btn:hover {
-  background-color: var(--p5r-glass);
+  background-color: var(--theme-input-bg);
 }
 
 /* ===== Sidebar Middle (New Chat Button) ===== */
@@ -770,7 +772,7 @@
   padding: var(--p5r-spacing-md) var(--p5r-spacing-lg);
   background: transparent;
   border: none;
-  color: var(--p5r-white);
+  color: var(--theme-text);
   font-family: "Google Sans", "Product Sans", "Roboto", "Noto Sans", system-ui, -apple-system, sans-serif;
   font-size: 14px;
   font-weight: 500;
@@ -794,7 +796,7 @@
 
 .galgame-sidebar__icon-plus {
   font-size: 20px;
-  color: var(--p5r-red);
+  color: var(--theme-accent);
   flex-shrink: 0;
 }
 
@@ -821,7 +823,7 @@
   font: var(--p5r-font-ui);
   font-size: 11px;
   font-weight: 600;
-  color: var(--p5r-gray);
+  color: var(--theme-text-secondary);
   text-transform: uppercase;
   padding: var(--p5r-spacing-sm) var(--p5r-spacing-md);
 }
@@ -832,7 +834,7 @@
   gap: var(--p5r-spacing-md);
   padding: var(--p5r-spacing-sm) var(--p5r-spacing-md);
   border-radius: var(--p5r-radius-full);
-  color: var(--p5r-white);
+  color: var(--theme-text);
   text-decoration: none;
   margin-left: -0.5vw;
   transition: background-color var(--p5r-duration-fast) var(--p5r-easing-sharp);
@@ -845,7 +847,7 @@
 }
 
 .galgame-sidebar__history-item:hover {
-  background-color: var(--p5r-glass);
+  background-color: var(--theme-input-bg);
 }
 
 .galgame-sidebar__history-icon {
@@ -868,7 +870,7 @@
   gap: var(--p5r-spacing-md);
   padding: var(--p5r-spacing-md) var(--p5r-spacing-md);
   border-radius: var(--p5r-radius-full);
-  color: var(--p5r-white);
+  color: var(--theme-text);
   background: transparent;
   border: none;
   cursor: pointer;
@@ -887,7 +889,7 @@
 }
 
 .galgame-sidebar__bottom-item:hover {
-  background-color: var(--p5r-glass);
+  background-color: var(--theme-input-bg);
 }
 
 .galgame-sidebar__bottom-icon {
