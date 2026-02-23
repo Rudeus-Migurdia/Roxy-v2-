@@ -31,7 +31,7 @@ import { SettingsPanel } from './components/settings';
 
 // Context providers
 import { SidebarProvider, useSidebarContext } from './contexts/SidebarContext';
-import { SettingsProvider } from './contexts/SettingsContext';
+import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 
 // Error Boundary
@@ -317,13 +317,23 @@ function App() {
 
 function AppWithProviders() {
   return (
-    <LanguageProvider>
-      <SettingsProvider>
+    <SettingsProvider>
+      <ThemeAwareApp />
+    </SettingsProvider>
+  );
+}
+
+function ThemeAwareApp() {
+  const { settings } = useSettings();
+
+  return (
+    <div data-theme={settings.general.theme}>
+      <LanguageProvider>
         <SidebarProvider defaultLeftOpen={true} defaultRightOpen={false} defaultLeftCollapsed={true}>
           <App />
         </SidebarProvider>
-      </SettingsProvider>
-    </LanguageProvider>
+      </LanguageProvider>
+    </div>
   );
 }
 

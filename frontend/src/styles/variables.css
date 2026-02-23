@@ -85,3 +85,64 @@
     /* Already dark by default */
   }
 }
+
+/* ========================================
+   Theme System - data-theme attributes
+   ======================================== */
+
+/* Common theme variables */
+[data-theme] {
+  --theme-bg: #0a0a0a;
+  --theme-surface: #1a1a1e;
+  --theme-text: #ffffff;
+  --theme-text-secondary: rgba(255, 255, 255, 0.7);
+  --theme-border: rgba(255, 255, 255, 0.1);
+  --theme-input-bg: rgba(255, 255, 255, 0.05);
+  --theme-input-border: rgba(255, 255, 255, 0.15);
+  --theme-shadow: rgba(0, 0, 0, 0.5);
+  --theme-accent: #FFCCB3;
+
+  /* Smooth transitions for theme changes */
+  transition-property: background-color, border-color, color, box-shadow;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 250ms;
+}
+
+/* P5R Theme (default) - Persona 5 Royal style */
+[data-theme="p5r"] {
+  --theme-bg: #0a0a0a;
+  --theme-surface: #1a1a1e;
+  --theme-text: #ffffff;
+  --theme-text-secondary: rgba(255, 255, 255, 0.7);
+  --theme-border: rgba(255, 255, 255, 0.1);
+  --theme-input-bg: rgba(255, 255, 255, 0.05);
+  --theme-input-border: rgba(255, 255, 255, 0.15);
+  --theme-shadow: rgba(0, 0, 0, 0.5);
+  --theme-accent: #FFCCB3;
+}
+
+/* Dark Theme - Claude style */
+[data-theme="dark"] {
+  --theme-bg: #0a0a0a;
+  --theme-surface: #1a1a1e;
+  --theme-text: #ffffff;
+  --theme-text-secondary: rgba(255, 255, 255, 0.7);
+  --theme-border: rgba(255, 255, 255, 0.08);
+  --theme-input-bg: rgba(255, 255, 255, 0.05);
+  --theme-input-border: rgba(255, 255, 255, 0.15);
+  --theme-shadow: rgba(0, 0, 0, 0.5);
+  --theme-accent: #6366f1;
+}
+
+/* Light Theme */
+[data-theme="light"] {
+  --theme-bg: #f8f9fa;
+  --theme-surface: #ffffff;
+  --theme-text: #1a1a1a;
+  --theme-text-secondary: #6c757d;
+  --theme-border: #dee2e6;
+  --theme-input-bg: #ffffff;
+  --theme-input-border: #dee2e6;
+  --theme-shadow: rgba(0, 0, 0, 0.1);
+  --theme-accent: #64B5F6;
+}
