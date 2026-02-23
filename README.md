@@ -67,12 +67,24 @@ npm run dev
 ```
 
 ## 更新日志
+
 ### 待实现
 - 分辨率和窗口化适配
 - 设置内部功能实现
+- 优化流式布局
 - 历史记录功能
 - live2d模型一键切换按钮
 - 桌宠模式
+
+### v2.0.3 (2026-02-23)
+- **Bug修复**：
+  - 修复useWebSocket useEffect依赖数组缺失问题
+  - 修复App.tsx中useCallback闭包陷阱（使用ref跟踪最新状态）
+  - 修复SettingsContext频繁写入localStorage（添加500ms防抖）
+  - 修复AudioProcessor资源清理不完整问题
+  - 修复语音输入在WebSocket未连接时无用户提示的问题
+  - 修复浅色主题背景色不应用的问题
+  - 修复浅色模式下麦克风按钮不可见的问题
 
 
 ### v2.0.2 (2026-02-22)

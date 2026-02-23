@@ -2,7 +2,7 @@
  * SettingsContext - Manages application settings with localStorage persistence
  */
 
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 
 // Setting categories and their types
 export interface Live2DSettings {
@@ -21,7 +21,7 @@ export interface AudioSettings {
 }
 
 export interface GeneralSettings {
-  theme: 'p5r' | 'light' | 'dark';
+  theme: 'light' | 'dark';
   language: 'en' | 'zh' | 'ja';
   autoScrollChat: boolean;
 }
@@ -67,12 +67,22 @@ const defaultSettings: AppSettings = {
 // Storage key
 const SETTINGS_STORAGE_KEY = 'nakari_settings';
 
+// Helper to normalize legacy p5r theme to dark
+function normalizeTheme(theme: string): 'light' | 'dark' {
+  if (theme === 'light') return 'light';
+  return 'dark'; // 'p5r' and any other value defaults to 'dark'
+}
+
 // Load settings from localStorage
 const loadSettings = (): AppSettings => {
   try {
     const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
+      // Normalize legacy p5r theme to dark
+      if (parsed.general?.theme) {
+        parsed.general.theme = normalizeTheme(parsed.general.theme);
+      }
       // Merge with defaults to handle new settings
       return {
         live2d: { ...defaultSettings.live2d, ...parsed.live2d },
@@ -106,6 +116,7 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [initialized, setInitialized] = useState(false);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Load settings on mount
   useEffect(() => {
@@ -114,15 +125,30 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setInitialized(true);
   }, []);
 
-  // Save settings to localStorage whenever they change
+  // Debounced save to localStorage
   useEffect(() => {
     if (initialized) {
-      try {
-        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
-      } catch (error) {
-        console.error('Failed to save settings to localStorage:', error);
+      // Clear previous timeout
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
       }
+
+      // Set new timeout (500ms debounce)
+      saveTimeoutRef.current = setTimeout(() => {
+        try {
+          localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+        } catch (error) {
+          console.error('Failed to save settings to localStorage:', error);
+        }
+      }, 500);
     }
+
+    // Cleanup timeout on unmount
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
   }, [settings, initialized]);
 
   // Update functions
@@ -167,6 +193,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       const parsed = JSON.parse(json);
       // Validate structure
       if (parsed.live2d && parsed.audio && parsed.general && parsed.advanced) {
+        // Normalize legacy p5r theme
+        if (parsed.general?.theme) {
+          parsed.general.theme = normalizeTheme(parsed.general.theme);
+        }
         setSettings({
           live2d: { ...defaultSettings.live2d, ...parsed.live2d },
           audio: { ...defaultSettings.audio, ...parsed.audio },

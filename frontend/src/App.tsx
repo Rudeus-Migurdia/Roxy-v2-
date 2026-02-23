@@ -21,6 +21,7 @@ import {
   TextInput,
   LeftSidebar,
   MainViewContainer,
+  ChatHistory,
 } from './components/galgame';
 
 // UI components
@@ -80,18 +81,37 @@ function App() {
   // Sidebar state
   const { leftSidebarOpen, leftSidebarCollapsed } = useSidebarContext();
 
+  // Settings
+  const { settings } = useSettings();
+
   // Refs
   const modelRef = useRef<any>(null);
   const audioProcessorRef = useRef<AudioProcessor | null>(null);
-  const modelRefCallback = useRef(modelRef);
-  const audioProcessorRefCallback = useRef(audioProcessorRef);
-  modelRefCallback.current = modelRef;
-  audioProcessorRefCallback.current = audioProcessorRef;
+  const chatHistoryRef = useRef<HTMLDivElement>(null);
+
+  // Use refs to track latest state values (avoid closure issues in callbacks)
+  const currentStateRef = useRef<Live2DState>(currentState);
+  const currentEmotionRef = useRef<string>(currentEmotion);
+  const triggerRef = useRef<any>(null);
+
+  // Update refs when state changes
+  useEffect(() => {
+    currentStateRef.current = currentState;
+  }, [currentState]);
+
+  useEffect(() => {
+    currentEmotionRef.current = currentEmotion;
+  }, [currentEmotion]);
 
   // Transition hook
   const { transition, trigger } = useTransition();
 
-  // Stable message handler using useCallback
+  // Store trigger in ref
+  useEffect(() => {
+    triggerRef.current = trigger;
+  }, [trigger]);
+
+  // Stable message handler - uses refs to avoid closure issues
   const handleMessage = useCallback((message: WSMessage) => {
     // Use payload for all message types (backend sends payload, not data)
     const payload = (message as any).payload || message.data;
@@ -102,16 +122,18 @@ function App() {
         console.log('WebSocket connected:', payload);
         break;
       }
-      case 'state':
+      case 'state': {
         const newState = (payload as { state: Live2DState }).state;
-        // Trigger transition on state change
-        if (newState !== currentState && newState === 'speaking') {
-          trigger(TRANSITION_TYPES.SLASH_DOWN, 300);
+        // Trigger transition on state change (using ref to get latest state)
+        const prevState = currentStateRef.current;
+        if (newState !== prevState && newState === 'speaking' && triggerRef.current) {
+          triggerRef.current(TRANSITION_TYPES.SLASH_DOWN, 300);
         }
         setCurrentState(newState);
         break;
+      }
 
-      case 'text':
+      case 'text': {
         const textData = payload as { text: string; isUser: boolean };
         // Only update if text is valid
         if (textData.text && textData.text !== 'undefined' && textData.text !== 'null') {
@@ -127,6 +149,7 @@ function App() {
           setCurrentDialog(newDialog);
         }
         break;
+      }
 
       case 'user_text':
         console.log('User text received:', payload);
@@ -135,37 +158,39 @@ function App() {
       case 'audio':
         console.log('Audio received:', payload);
         // Play audio if enabled
-        if (config.enableAudio && audioProcessorRefCallback.current?.current) {
+        if (config.enableAudio && audioProcessorRef.current) {
           const audioData = payload as { audio: string; format: string; sampleRate: number };
-          audioProcessorRefCallback.current.current.play(audioData.audio)
+          audioProcessorRef.current.play(audioData.audio)
             .then(() => console.log('[App] Audio playback started'))
             .catch(e => console.error('[App] Audio playback failed:', e));
         }
         break;
 
-      case 'emotion':
+      case 'emotion': {
         const newEmotion = (payload as { emotion: string }).emotion;
         console.log('Emotion:', newEmotion);
-        // Trigger transition on emotion change
-        if (newEmotion !== currentEmotion && newEmotion !== 'neutral') {
-          trigger(TRANSITION_TYPES.SLASH_DOWN, 300);
+        // Trigger transition on emotion change (using ref to get latest emotion)
+        const prevEmotion = currentEmotionRef.current;
+        if (newEmotion !== prevEmotion && newEmotion !== 'neutral' && triggerRef.current) {
+          triggerRef.current(TRANSITION_TYPES.SLASH_DOWN, 300);
         }
         setCurrentEmotion(newEmotion);
         // Apply emotion to Live2D model if available
-        if (modelRefCallback.current?.current) {
+        if (modelRef.current) {
           import('./live2d/Live2DRenderer').then(({ setModelEmotion }) => {
-            setModelEmotion(modelRefCallback.current.current, newEmotion as any);
+            setModelEmotion(modelRef.current, newEmotion as any);
           });
         }
         break;
+      }
 
       case 'motion':
         console.log('Motion:', payload);
         // Trigger motion on Live2D model if available
-        if (modelRefCallback.current?.current) {
+        if (modelRef.current) {
           import('./live2d/Live2DRenderer').then(({ triggerMotion }) => {
             const motionData = payload as { group: string; index: number };
-            triggerMotion(modelRefCallback.current.current, motionData.group, motionData.index);
+            triggerMotion(modelRef.current, motionData.group, motionData.index);
           });
         }
         break;
@@ -173,10 +198,10 @@ function App() {
       case 'param':
         console.log('Param:', payload);
         // Direct parameter setting
-        if (modelRefCallback.current?.current) {
+        if (modelRef.current) {
           import('./live2d/Live2DRenderer').then(({ setModelParams }) => {
             const paramData = payload as { params: Array<{ name: string; value: number }> };
-            setModelParams(modelRefCallback.current.current, paramData.params);
+            setModelParams(modelRef.current, paramData.params);
           });
         }
         break;
@@ -184,7 +209,7 @@ function App() {
       default:
         console.log('[App] Unknown message type:', message.type);
     }
-  }, [config.enableAudio, currentState, currentEmotion, trigger]);
+  }, [config.enableAudio]); // Minimal dependencies - uses refs for state access
 
   // Stable state change handler
   const handleStateChange = useCallback((state: string) => {
@@ -206,7 +231,7 @@ function App() {
     console.log('[App] Connecting to WebSocket:', config.wsUrl);
     // Auto-connect on mount (only once)
     connect();
-  }, []); // Empty deps - run once on mount
+  }, [connect]); // Added connect dependency
 
   // Handle user input
   const handleSendMessage = useCallback((text: string) => {
@@ -281,12 +306,23 @@ function App() {
 
         {/* Dialog Section */}
         {live2dReady && (
-          <div className="galgame-dialog-container">
-            <CharacterName name={currentDialog?.speaker} />
-            <DialogBox
-              text={currentDialog?.text ?? 'Hello! I am Roxy. How can I help you today?'}
-            />
-          </div>
+          <>
+            {/* Chat History - shown when autoScrollChat is enabled */}
+            {settings.general.autoScrollChat && (
+              <ChatHistory
+                messages={messageHistory}
+                containerRef={chatHistoryRef}
+              />
+            )}
+
+            {/* Current Dialog */}
+            <div className="galgame-dialog-container">
+              <CharacterName name={currentDialog?.speaker} />
+              <DialogBox
+                text={currentDialog?.text ?? 'Hello! I am Roxy. How can I help you today?'}
+              />
+            </div>
+          </>
         )}
 
         {/* Input Area */}

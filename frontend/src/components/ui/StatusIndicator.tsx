@@ -30,10 +30,27 @@ export function StatusIndicator({
     }
   };
 
+  const getStatusText = () => {
+    switch (connectionState) {
+      case 'connected':
+        return 'Connected';
+      case 'connecting':
+        return 'Connecting...';
+      case 'reconnecting':
+        return 'Reconnecting...';
+      case 'disconnected':
+        return 'Disconnected';
+      case 'error':
+        return 'Connection Error';
+      default:
+        return connectionState;
+    }
+  };
+
   return (
     <div className={`galgame-status-indicator ${className}`}>
       <span className={`galgame-status-dot ${getStatusColor()}`} />
-      <span>{connectionState}</span>
+      <span>{getStatusText()}</span>
       {live2dReady && <span> • Live2D Ready</span>}
     </div>
   );

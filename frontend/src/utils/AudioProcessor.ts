@@ -135,8 +135,10 @@ export class AudioProcessor {
     if (this.currentSource) {
       try {
         this.currentSource.stop();
+        // Disconnect the source to prevent memory leaks
+        this.currentSource.disconnect();
       } catch {
-        // Source already stopped
+        // Source already stopped or disconnected
       }
       this.currentSource = null;
     }
@@ -164,11 +166,27 @@ export class AudioProcessor {
    * Clean up resources
    */
   dispose(): void {
+    // Stop any playing audio
     this.stop();
-    if (this.audioContext) {
-      this.audioContext.close();
-      this.audioContext = null;
+
+    // Disconnect analyser from destination before cleanup
+    if (this.analyser) {
+      try {
+        this.analyser.disconnect();
+      } catch {
+        // Already disconnected
+      }
       this.analyser = null;
+    }
+
+    // Close AudioContext
+    if (this.audioContext) {
+      try {
+        this.audioContext.close();
+      } catch {
+        // Already closed
+      }
+      this.audioContext = null;
     }
   }
 }

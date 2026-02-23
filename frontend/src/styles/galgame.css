@@ -179,14 +179,16 @@
   align-items: center;
   gap: var(--p5r-spacing-sm);
   padding: var(--p5r-spacing-sm) var(--p5r-spacing-md);
-  background: var(--p5r-overlay);
+  background: var(--theme-surface);
   border-radius: var(--p5r-radius-full);
-  color: var(--p5r-white);
+  color: var(--theme-text);
   font: var(--p5r-font-ui);
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 1px;
   backdrop-filter: blur(10px);
+  opacity: 0.9;
+  border: 1px solid var(--theme-border);
 }
 
 .galgame-status-dot {
@@ -222,36 +224,11 @@
   transition: transform var(--p5r-duration-normal) var(--p5r-easing-sharp), width var(--p5r-duration-normal) var(--p5r-easing-sharp);
 }
 
-/* Dialog shift effects when sidebar opens - moves same amount as Live2D to maintain spacing */
-.galgame-dialog-container--shift-right {
-  transform: translateX(-5%);
-  width: 70%;
-  max-width: 750px;
-}
-
-/* When sidebar is collapsed, use less shift */
-.galgame-dialog-container--shift-right-collapsed {
-  transform: translateX(-38%);
-}
-
-.galgame-dialog-container--shift-left {
-  transform: translateX(-30%);
-  width: 60%;
-  max-width: 600px;
-}
-
-/* Both sidebars open */
-.galgame-dialog-container--shift-right.galgame-dialog-container--shift-left {
-  transform: translateX(-50%);
-  width: 50%;
-  max-width: 500px;
-}
-
 /* ===== Character Name Tag ===== */
 .galgame-character-name {
   display: inline-block;
   padding: var(--p5r-spacing-sm) var(--p5r-spacing-md);
-  background: var(--theme-accent);
+  background: var(--p5r-orange);
   color: var(--theme-bg);
   font: var(--p5r-font-ui);
   font-size: var(--p5r-font-size-ui);
@@ -378,30 +355,6 @@
   transition: transform var(--p5r-duration-normal) var(--p5r-easing-sharp), width var(--p5r-duration-normal) var(--p5r-easing-sharp);
 }
 
-/* Input container shift effects when sidebar opens - moves same amount as other elements */
-.galgame-input-container--shift-right {
-  transform: translateX(-10%);
-  width: 50%;
-  max-width: 420px;
-}
-
-/* When sidebar is collapsed, use less shift */
-.galgame-input-container--shift-right-collapsed {
-  transform: translateX(-32%);
-}
-
-.galgame-input-container--shift-left {
-  transform: translateX(-30%);
-  width: 45%;
-  max-width: 380px;
-}
-
-/* Both sidebars open */
-.galgame-input-container--shift-right.galgame-input-container--shift-left {
-  transform: translateX(-50%);
-  width: 40%;
-  max-width: 350px;
-}
 
 .galgame-input {
   flex: 1;
@@ -557,12 +510,12 @@
 /* ===== Chat History (Message Bubbles) ===== */
 .chat-history-container {
   position: absolute;
-  bottom: calc(var(--p5r-spacing-lg) + 200px);
+  bottom: 25vh;
   left: 50%;
   transform: translateX(-50%);
-  width: 60%;
-  max-width: 500px;
-  max-height: 40vh;
+  width: 70%;
+  max-width: 880px;
+  max-height: 68vh;
   overflow-y: auto;
   z-index: var(--p5r-z-dialog);
   padding: 0 var(--p5r-spacing-md);
@@ -1102,7 +1055,7 @@
 }
 
 .galgame-sidebar__message-row.user .galgame-sidebar__message-speaker {
-  color: var(--p5r-red);
+  color: var(--p5r-orange);
 }
 
 .galgame-sidebar__message-row.ai .galgame-sidebar__message-speaker {
@@ -1755,4 +1708,42 @@
   margin: 0;
   text-transform: uppercase;
   letter-spacing: 1px;
+}
+
+/* ===== Input Error Message ===== */
+.galgame-input-error {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 12px;
+  background: var(--p5r-red);
+  color: var(--p5r-white);
+  font-size: 12px;
+  border-radius: 8px;
+  white-space: nowrap;
+  animation: errorFadeIn 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 100;
+}
+
+.galgame-input-error::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--p5r-red);
+}
+
+@keyframes errorFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 }

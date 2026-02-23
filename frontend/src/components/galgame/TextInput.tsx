@@ -27,6 +27,7 @@ export function TextInput({
   const [text, setText] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Use translated placeholder as default
   const inputPlaceholder = placeholder ?? t.typeMessage;
@@ -39,6 +40,7 @@ export function TextInput({
 
   const handleSend = () => {
     if (text.trim()) {
+      console.log('[TextInput] Sending message:', text.trim());
       onSend(text.trim());
       setText('');
     }
@@ -47,7 +49,11 @@ export function TextInput({
   // 处理录音完成
   const handleRecordingComplete = async (blob: Blob, base64Audio: string) => {
     if (!wsSend) {
-      console.warn('WebSocket send function not available');
+      const errorMsg = 'WebSocket not connected. Voice input requires a connection.';
+      console.warn('[TextInput] ' + errorMsg);
+      setErrorMessage(errorMsg);
+      setTimeout(() => setErrorMessage(null), 3000);
+      setIsRecording(false);
       return;
     }
 
@@ -73,25 +79,27 @@ export function TextInput({
       wsSend('audio_blob' as WSMessageType, message.payload);
     } catch (error) {
       console.error('Failed to send audio:', error);
+      setErrorMessage('Failed to send audio. Please try again.');
+      setTimeout(() => setErrorMessage(null), 3000);
     }
 
     setIsRecording(false);
   };
 
-  // 录音状态变化
-  const handleRecordingStateChange = (isRecordingNow: boolean) => {
-    setIsRecording(isRecordingNow);
-  };
-
   return (
     <div className={`galgame-input-container ${className} ${isRecording ? 'recording' : ''}`}>
       {/* 语音输入按钮 */}
-      {wsSend && (
-        <VoiceInputButton
-          onRecordingComplete={handleRecordingComplete}
-          disabled={disabled || isRecording}
-          className="voice-input-wrapper"
-        />
+      <VoiceInputButton
+        onRecordingComplete={handleRecordingComplete}
+        disabled={disabled || isRecording || !wsSend}
+        className="voice-input-wrapper"
+      />
+
+      {/* Error message toast */}
+      {errorMessage && (
+        <div className="galgame-input-error">
+          {errorMessage}
+        </div>
       )}
 
       <input

@@ -4,6 +4,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useSidebarContext } from '../../contexts/SidebarContext';
+import { useSettings } from '../../contexts/SettingsContext';
 import type { DialogState } from '../../types';
 import { ChatBubble } from './ChatBubble';
 
@@ -13,14 +14,15 @@ interface RightSidebarProps {
 
 export function RightSidebar({ messages }: RightSidebarProps) {
   const { rightSidebarOpen, toggleRightSidebar } = useSidebarContext();
+  const { settings } = useSettings();
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom when new messages arrive (respects user setting)
   useEffect(() => {
-    if (scrollRef.current && rightSidebarOpen) {
+    if (scrollRef.current && rightSidebarOpen && settings.general.autoScrollChat) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, rightSidebarOpen]);
+  }, [messages, rightSidebarOpen, settings.general.autoScrollChat]);
 
   return (
     <aside className={`galgame-sidebar galgame-sidebar--right ${rightSidebarOpen ? 'galgame-sidebar--open' : ''}`}>

@@ -48,12 +48,13 @@ export function useWebSocket(
 
     // 检查重连次数限制
     if (reconnectAttemptsRef.current >= MAX_RECONNECT_ATTEMPTS) {
-      console.warn(`Maximum reconnection attempts (${MAX_RECONNECT_ATTEMPTS}) reached`);
+      console.warn(`[useWebSocket] Maximum reconnection attempts (${MAX_RECONNECT_ATTEMPTS}) reached`);
       setConnectionState('error');
       latestOptionsRef.current.onStateChange?.('error');
       return;
     }
 
+    console.log('[useWebSocket] Connecting to:', url);
     setConnectionState('connecting');
     latestOptionsRef.current.onStateChange?.('connecting');
 
@@ -76,6 +77,7 @@ export function useWebSocket(
       ws.onmessage = (event) => {
         try {
           const message: WSMessage = JSON.parse(event.data);
+          console.log('[useWebSocket] Received:', message.type, message);
           latestOptionsRef.current.onMessage?.(message);
 
           // 处理ping/pong以维持连接健康
@@ -163,9 +165,10 @@ export function useWebSocket(
         const message: WSMessage = type === 'user_text'
           ? { type, payload: data, timestamp: Date.now() }
           : { type, data, timestamp: Date.now() };
+        console.log('[useWebSocket] Sending:', message);
         wsRef.current.send(JSON.stringify(message));
       } else {
-        console.warn('Cannot send message: WebSocket not connected');
+        console.warn('[useWebSocket] Cannot send message: WebSocket not connected, state:', wsRef.current?.readyState);
       }
     },
     []
@@ -185,7 +188,7 @@ export function useWebSocket(
   useEffect(() => {
     latestOptionsRef.current = options;
     sendMessageRef.current = sendMessage;
-  }, [options]);
+  }, [options, sendMessage]);
 
   // 组件卸载时清理
   useEffect(() => {
