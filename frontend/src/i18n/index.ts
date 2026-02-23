@@ -52,7 +52,6 @@ export interface Translations {
 
   // Sidebar
   newChat: string;
-  settings: string;
   recentHistory: string;
 
   // Input
@@ -93,7 +92,6 @@ const translations: Record<Language, Translations> = {
     positionValue: (value: number) => `${value}px`,
     volumeValue: (value: number) => `${value}%`,
     newChat: 'New Chat',
-    settings: 'Settings',
     recentHistory: 'Recent History',
     typeMessage: 'Type a message...',
     recording: 'Recording...',
@@ -117,7 +115,7 @@ const translations: Record<Language, Translations> = {
     breathingAnimation: '呼吸动画',
     ttsVolume: '语音音量',
     micSensitivity: '麦克风灵敏度',
-    lipSync: '唇同步',
+    lipSync: '嘴型同步',
     enableAudio: '启用音频',
     debugMode: '调试模式',
     showAIThoughts: '显示 AI 思考',
@@ -130,7 +128,6 @@ const translations: Record<Language, Translations> = {
     positionValue: (value: number) => `${value}px`,
     volumeValue: (value: number) => `${value}%`,
     newChat: '新对话',
-    settings: '设置',
     recentHistory: '近期记录',
     typeMessage: '输入消息...',
     recording: '录音中...',
@@ -167,7 +164,6 @@ const translations: Record<Language, Translations> = {
     positionValue: (value: number) => `${value}px`,
     volumeValue: (value: number) => `${value}%`,
     newChat: '新しいチャット',
-    settings: '設定',
     recentHistory: '最近の履歴',
     typeMessage: 'メッセージを入力...',
     recording: '録音中...',
