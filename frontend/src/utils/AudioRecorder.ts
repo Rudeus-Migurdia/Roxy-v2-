@@ -6,7 +6,6 @@
 export interface RecordingState {
   isRecording: boolean;
   duration: number; // 录制时长（秒）
-  audioLevel: number; // 音量级别 0-1
 }
 
 export interface AudioRecorderOptions {
@@ -272,7 +271,6 @@ export class AudioRecorder {
     this.options.onStateChange?.({
       isRecording: this.isRecording,
       duration: this.getDuration(),
-      audioLevel: 0, // 音量级别通过 onAudioLevel 单独回调
     });
   }
 

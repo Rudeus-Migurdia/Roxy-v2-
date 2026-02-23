@@ -2,7 +2,7 @@
  * P5RTransition - Main transition component that manages different transition effects
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { TransitionType } from '../../utils/styles/theme';
 import { ShatterEffect } from './ShatterEffect';
 import { SlashEffect } from './SlashEffect';
@@ -80,10 +80,22 @@ export function P5RTransition({
  */
 export function useTransition() {
   const [transition, setTransition] = useState<TransitionType | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const trigger = useCallback((type: TransitionType, duration = 300) => {
     setTransition(type);
-    setTimeout(() => setTransition(null), duration);
+    timeoutRef.current = setTimeout(() => {
+      setTransition(null);
+      timeoutRef.current = null;
+    }, duration);
   }, []);
 
   return { transition, trigger };

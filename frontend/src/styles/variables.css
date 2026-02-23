@@ -91,19 +91,6 @@
    Theme System - data-theme attributes
    ======================================== */
 
-/* P5R Theme (default) - Persona 5 Royal style */
-[data-theme="p5r"] {
-  --theme-bg: #0a0a0a;
-  --theme-surface: #1a1a1e;
-  --theme-text: #ffffff;
-  --theme-text-secondary: rgba(255, 255, 255, 0.7);
-  --theme-border: rgba(255, 255, 255, 0.1);
-  --theme-input-bg: rgba(255, 255, 255, 0.05);
-  --theme-input-border: rgba(255, 255, 255, 0.15);
-  --theme-shadow: rgba(0, 0, 0, 0.5);
-  --theme-accent: #FFCCB3;
-}
-
 /* Dark Theme - Claude style */
 [data-theme="dark"] {
   --theme-bg: #0a0a0a;

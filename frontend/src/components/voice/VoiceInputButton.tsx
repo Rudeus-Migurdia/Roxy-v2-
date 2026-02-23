@@ -15,7 +15,6 @@ interface VoiceInputButtonProps {
 interface RecordingState {
   isRecording: boolean;
   duration: number;
-  audioLevel: number;
 }
 
 export function VoiceInputButton({
@@ -26,7 +25,6 @@ export function VoiceInputButton({
   const [recordingState, setRecordingState] = useState<RecordingState>({
     isRecording: false,
     duration: 0,
-    audioLevel: 0,
   });
 
   const [audioLevel, setAudioLevel] = useState(0);
@@ -109,7 +107,6 @@ export function VoiceInputButton({
     setRecordingState({
       isRecording: false,
       duration: 0,
-      audioLevel: 0,
     });
     setAudioLevel(0);
   }, [onRecordingComplete]);

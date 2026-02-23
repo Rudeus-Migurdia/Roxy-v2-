@@ -40,7 +40,6 @@ export function TextInput({
 
   const handleSend = () => {
     if (text.trim()) {
-      console.log('[TextInput] Sending message:', text.trim());
       onSend(text.trim());
       setText('');
     }
@@ -76,7 +75,7 @@ export function TextInput({
 
     // 发送到后端
     try {
-      wsSend('audio_blob' as WSMessageType, message.payload);
+      wsSend('audio_blob', message.payload);
     } catch (error) {
       console.error('Failed to send audio:', error);
       setErrorMessage('Failed to send audio. Please try again.');

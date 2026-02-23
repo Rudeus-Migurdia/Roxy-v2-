@@ -16,7 +16,6 @@ export function RightSidebar({ messages }: RightSidebarProps) {
   const { rightSidebarOpen, toggleRightSidebar } = useSidebarContext();
   const { settings } = useSettings();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const isUserScrollingRef = useRef(false);
 
   // Check if user is near bottom (within 100px)
   const isNearBottom = useCallback((): boolean => {
@@ -35,11 +34,6 @@ export function RightSidebar({ messages }: RightSidebarProps) {
     }
   }, [messages, rightSidebarOpen, settings.general.autoScrollChat, isNearBottom]);
 
-  // Detect user manual scrolling
-  const handleScroll = useCallback(() => {
-    isUserScrollingRef.current = !isNearBottom();
-  }, [isNearBottom]);
-
   return (
     <aside className={`galgame-sidebar galgame-sidebar--right ${rightSidebarOpen ? 'galgame-sidebar--open' : ''}`}>
       {/* Sidebar Header */}
@@ -55,7 +49,7 @@ export function RightSidebar({ messages }: RightSidebarProps) {
       </div>
 
       {/* Chat Messages */}
-      <div ref={scrollRef} className="galgame-sidebar__content" onScroll={handleScroll}>
+      <div ref={scrollRef} className="galgame-sidebar__content">
         {messages.length === 0 ? (
           <div className="galgame-sidebar__empty">
             <div className="galgame-sidebar__empty-icon">💬</div>

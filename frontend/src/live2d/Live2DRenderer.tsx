@@ -302,7 +302,7 @@ export function Live2DRenderer({
           fontSize: '48px',
           marginBottom: '20px',
         }}>🎭</div>
-        <p style={{fontSize: '18px', marginBottom: '10px'}}>Live2D 模型加载中...</p>
+        <p style={{fontSize: '18px', marginBottom: '10px'}}>Live2D 模型加载失败</p>
         <p style={{fontSize: '12px', opacity: 0.7, maxWidth: '400px'}}>
           {loadError}
         </p>

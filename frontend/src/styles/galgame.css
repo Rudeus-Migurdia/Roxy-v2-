@@ -81,25 +81,6 @@
   z-index: var(--p5r-z-live2d);
 }
 
-/* Live2D shift effects when sidebar opens - moves same amount as dialog to maintain spacing */
-.galgame-character-layer--shift-right {
-  transform: translateX(-15%);
-}
-
-/* When sidebar is collapsed, use less shift */
-.galgame-character-layer--shift-right-collapsed {
-  transform: translateX(-45%);
-}
-
-.galgame-character-layer--shift-left {
-  transform: translateX(-10%);
-}
-
-/* Both sidebars open */
-.galgame-character-layer--shift-right.galgame-character-layer--shift-left {
-  transform: translateX(-5%);
-}
-
 .galgame-character-layer canvas {
   width: 100% !important;
   height: 100% !important;

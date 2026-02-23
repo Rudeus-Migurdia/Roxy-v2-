@@ -6,30 +6,14 @@ import { useEffect, useState } from 'react';
 import { useSidebarContext } from '../../contexts/SidebarContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 
-interface NavItem {
-  id: string;
-  label: string;
-  icon: string;
-  onClick: () => void;
-}
-
 interface LeftSidebarProps {
-  navItems?: NavItem[];
   chatHistory?: { id: string; title: string }[];
   onSettingsClick?: () => void;
 }
 
-const defaultNavItems: NavItem[] = [
-  { id: 'home', label: 'Home', icon: '⌂', onClick: () => console.log('Home clicked') },
-  { id: 'chat', label: 'Chat', icon: '💬', onClick: () => console.log('Chat clicked') },
-  { id: 'history', label: 'History', icon: '📜', onClick: () => console.log('History clicked') },
-  { id: 'settings', label: 'Settings', icon: '⚙', onClick: () => console.log('Settings clicked') },
-];
-
 const defaultChatHistory: { id: string; title: string }[] = [];
 
 export function LeftSidebar({
-  navItems = defaultNavItems,
   chatHistory = defaultChatHistory,
   onSettingsClick,
 }: LeftSidebarProps) {
