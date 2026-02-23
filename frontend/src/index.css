@@ -22,5 +22,5 @@ body {
   font-family: var(--p5r-font-ui);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: var(--p5r-black);
+  background: var(--theme-bg);
 }
