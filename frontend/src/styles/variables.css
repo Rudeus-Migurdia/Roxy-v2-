@@ -13,6 +13,7 @@
   /* Accent Colors */
   --p5r-yellow: #ffd60a;
   --p5r-gray: #6c757d;
+  --p5r-orange: #FFCCB3;  /* Light orange for buttons/inputs borders */
 
   /* UI Colors */
   --p5r-overlay: rgba(10, 10, 10, 0.9);

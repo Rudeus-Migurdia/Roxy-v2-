@@ -8,9 +8,11 @@ interface BackgroundLayerProps {
 }
 
 export function BackgroundLayer({ imageUrl, className = '' }: BackgroundLayerProps) {
+  // Only set style when imageUrl is provided
+  // Otherwise, let CSS handle the background using var(--theme-bg)
   const backgroundStyle = imageUrl
     ? { backgroundImage: `url(${imageUrl})` }
-    : { backgroundColor: '#0a0a0a' };
+    : undefined;
 
   return (
     <div

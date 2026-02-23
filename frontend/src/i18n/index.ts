@@ -115,7 +115,7 @@ const translations: Record<Language, Translations> = {
     breathingAnimation: '呼吸动画',
     ttsVolume: '语音音量',
     micSensitivity: '麦克风灵敏度',
-    lipSync: '嘴型同步',
+    lipSync: '口型同步',
     enableAudio: '启用音频',
     debugMode: '调试模式',
     showAIThoughts: '显示 AI 思考',
