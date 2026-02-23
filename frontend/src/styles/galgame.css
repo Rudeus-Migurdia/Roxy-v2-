@@ -21,8 +21,12 @@
   height: 100%;
   pointer-events: none;
   transform: translateX(2.1vw);
-  transition: transform var(--p5r-duration-normal) var(--p5r-easing-sharp);
   z-index: var(--p5r-z-live2d);
+}
+
+/* Enable transitions only when explicitly needed */
+.galgame-main-view.can-animate {
+  transition: transform var(--p5r-duration-normal) var(--p5r-easing-sharp);
 }
 
 /* Shift right when sidebar is open and NOT collapsed (2.1vw + 5.2vw = 7.3vw) */
@@ -75,7 +79,6 @@
   width: 50%;
   height: 90%;
   z-index: var(--p5r-z-live2d);
-  transition: transform var(--p5r-duration-normal) var(--p5r-easing-sharp);
 }
 
 /* Live2D shift effects when sidebar opens - moves same amount as dialog to maintain spacing */
@@ -221,7 +224,7 @@
   width: 85%;
   max-width: 900px;
   z-index: var(--p5r-z-dialog);
-  transition: transform var(--p5r-duration-normal) var(--p5r-easing-sharp), width var(--p5r-duration-normal) var(--p5r-easing-sharp);
+  transition: width var(--p5r-duration-normal) var(--p5r-easing-sharp);
 }
 
 /* ===== Character Name Tag ===== */
@@ -243,7 +246,6 @@
     0 100%
   );
   margin-bottom: var(--p5r-spacing-sm);
-  animation: slideInLeft var(--p5r-duration-fast) var(--p5r-easing-sharp);
 }
 
 .galgame-character-name.empty {
@@ -269,7 +271,6 @@
     15px 100%,
     0 calc(100% - 15px)
   );
-  animation: dialogSlideIn var(--p5r-duration-normal) var(--p5r-easing-smooth);
   min-height: 80px;
 }
 
@@ -345,14 +346,14 @@
 .galgame-input-container {
   position: absolute;
   bottom: calc(var(--p5r-spacing-lg) + 140px);
-  left: calc(50% - 0.8vw);
+  left: 50%;
   transform: translateX(-50%);
   display: flex;
   gap: var(--p5r-spacing-md);
   z-index: var(--p5r-z-dialog);
   width: 60%;
   max-width: 500px;
-  transition: transform var(--p5r-duration-normal) var(--p5r-easing-sharp), width var(--p5r-duration-normal) var(--p5r-easing-sharp);
+  transition: width var(--p5r-duration-normal) var(--p5r-easing-sharp);
 }
 
 
