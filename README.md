@@ -73,7 +73,7 @@ npm run dev
 - 设置内部功能实现
 - 优化流式布局
 - 历史记录功能
-- live2d模型一键切换按钮
+- live2d模型一键切换
 - 桌宠模式
 
 ### v2.0.3 (2026-02-23)
@@ -85,6 +85,14 @@ npm run dev
   - 修复语音输入在WebSocket未连接时无用户提示的问题
   - 修复浅色主题背景色不应用的问题
   - 修复浅色模式下麦克风按钮不可见的问题
+  - 修复WebSocket连接状态检查不完整（添加CLOSING状态检查）
+  - 修复WebSocket发送消息null检查不安全的问题
+  - 修复AudioProcessor requestAnimationFrame内存泄漏
+  - 修复AudioRecorder媒体流清理不完整问题
+  - 修复AudioRecorder动画帧管理问题
+  - 修复VoiceInputButton定时器管理复杂问题
+  - 修复RightSidebar自动滚动干扰用户操作问题
+  - 修复StatusIndicator默认情况返回空字符串问题
 
 
 ### v2.0.2 (2026-02-22)
