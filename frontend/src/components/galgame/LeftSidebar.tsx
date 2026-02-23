@@ -2,6 +2,7 @@
  * LeftSidebar - Gemini-style collapsible navigation sidebar
  */
 
+import { useEffect, useState } from 'react';
 import { useSidebarContext } from '../../contexts/SidebarContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 
@@ -34,6 +35,20 @@ export function LeftSidebar({
 }: LeftSidebarProps) {
   const { leftSidebarOpen, leftSidebarCollapsed, toggleLeftSidebar, toggleLeftSidebarCollapse } = useSidebarContext();
   const { t } = useLanguage();
+
+  // Delay text display until after sidebar expansion animation completes (150ms)
+  const [showText, setShowText] = useState(leftSidebarCollapsed === false);
+
+  useEffect(() => {
+    if (!leftSidebarCollapsed) {
+      const timer = setTimeout(() => {
+        setShowText(true);
+      }, 90);
+      return () => clearTimeout(timer);
+    } else {
+      setShowText(false);
+    }
+  }, [leftSidebarCollapsed]);
 
   return (
     <aside
@@ -82,7 +97,7 @@ export function LeftSidebar({
 
       {/* Chat history list */}
       <div className="galgame-sidebar__history">
-        {!leftSidebarCollapsed && (
+        {showText && (
           <div className="galgame-sidebar__history-title">{t.recentHistory}</div>
         )}
         {chatHistory.map((chat) => (

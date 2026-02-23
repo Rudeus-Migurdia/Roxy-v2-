@@ -112,9 +112,6 @@ npm run dev
 - 新增 `AUTO_SHUTDOWN_ON_DISCONNECT` 配置选项
 - 改进启动流程和错误处理
 - 优化Web页面设计，对对话框和live2d模型进行分离
-
-
-### v2.0.0 (2025-02-21)
 - 新增 Live2D 前端集成
 - 新增 WebSocket API
 - 修复前后端连接问题
