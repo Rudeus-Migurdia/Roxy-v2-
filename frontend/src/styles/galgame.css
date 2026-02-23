@@ -43,6 +43,7 @@
   width: 100%;
   height: 100%;
   z-index: var(--p5r-z-background);
+  background-color: var(--theme-bg);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -62,7 +63,7 @@
     transparent 50%,
     var(--theme-shadow) 100%
   );
-  opacity: 0.3;
+  opacity: 0.15;
 }
 
 /* ===== Live2D Character Layer ===== */
