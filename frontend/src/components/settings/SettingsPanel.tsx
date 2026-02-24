@@ -154,29 +154,29 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
 
               {/* Position X */}
               <div className="setting-item">
-                <label className="setting-label">{t.positionX}: {t.positionValue(settings.live2d.positionX)}</label>
+                <label className="setting-label">{t.positionX}: {Math.round(settings.live2d.positionX * 100)}%</label>
                 <input
                   type="range"
                   className="setting-slider"
-                  min="-200"
-                  max="200"
-                  step="10"
-                  value={settings.live2d.positionX}
-                  onChange={(e) => updateLive2DSettings({ positionX: parseInt(e.target.value) })}
+                  min="-50"
+                  max="50"
+                  step="1"
+                  value={settings.live2d.positionX * 100}
+                  onChange={(e) => updateLive2DSettings({ positionX: parseFloat(e.target.value) / 100 })}
                 />
               </div>
 
               {/* Position Y */}
               <div className="setting-item">
-                <label className="setting-label">{t.positionY}: {t.positionValue(settings.live2d.positionY)}</label>
+                <label className="setting-label">{t.positionY}: {Math.round(settings.live2d.positionY * 100)}%</label>
                 <input
                   type="range"
                   className="setting-slider"
-                  min="-200"
-                  max="200"
-                  step="10"
-                  value={settings.live2d.positionY}
-                  onChange={(e) => updateLive2DSettings({ positionY: parseInt(e.target.value) })}
+                  min="-50"
+                  max="50"
+                  step="1"
+                  value={settings.live2d.positionY * 100}
+                  onChange={(e) => updateLive2DSettings({ positionY: parseFloat(e.target.value) / 100 })}
                 />
               </div>
 

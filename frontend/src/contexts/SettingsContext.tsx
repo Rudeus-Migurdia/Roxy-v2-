@@ -6,11 +6,11 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef, ty
 
 // Setting categories and their types
 export interface Live2DSettings {
-  modelScale: number;
-  positionX: number;
-  positionY: number;
-  idleMotion: boolean;
-  breathingAnimation: boolean;
+  modelScale: number;        // Model scale multiplier (0.5 - 2.0)
+  positionX: number;         // Horizontal position as percentage of viewport (-0.5 - 0.5)
+  positionY: number;         // Vertical position as percentage of viewport (-0.5 - 0.5)
+  idleMotion: boolean;       // Enable idle animation
+  breathingAnimation: boolean; // Enable breathing animation
 }
 
 export interface AudioSettings {

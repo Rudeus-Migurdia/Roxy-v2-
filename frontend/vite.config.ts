@@ -7,10 +7,6 @@ export default defineConfig({
   optimizeDeps: {
     include: ['pixi-live2d-display', 'pixi-live2d-display/cubism2'],
   },
-  define: {
-    // Make Live2D available globally for pixi-live2d-display
-    __LIVE2D_SDK_ENABLED__: JSON.stringify(true),
-  },
   server: {
     port: 5173,
     host: true,

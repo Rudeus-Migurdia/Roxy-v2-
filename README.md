@@ -68,6 +68,7 @@ npm run dev
 
 ## 更新日志
 
+
 ### 待实现
 - 分辨率和窗口化适配
 - 设置面板内部功能实现
@@ -75,6 +76,13 @@ npm run dev
 - 历史记录功能
 - live2d模型一键切换
 - 桌宠模式
+
+### v2.0.4 (2026-02-24)
+- 新增Live2D 位置控制：
+- **Bug修复**：
+  - 修复 Live2D canvas 尺寸限制导致的黑色边界问题（canvas 从 50%x90% 扩展至 100%x100%）
+  - 修复 positionX/positionY 使用 parseInt 导致的代码不一致问题（改用 parseFloat）
+  - 修复 Live2D settings 为 undefined 时的位置计算问题（添加默认值处理）
 
 ### v2.0.3 (2026-02-23)
 - 加入主题切换功能

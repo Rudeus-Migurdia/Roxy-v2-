@@ -302,6 +302,7 @@ function App() {
           config={config.modelConfig}
           onModelLoaded={handleModelLoaded}
           onError={handleLive2DError}
+          live2dSettings={settings.live2d}
         />
 
         {/* Dialog Section */}

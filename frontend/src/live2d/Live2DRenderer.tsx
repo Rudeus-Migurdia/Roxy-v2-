@@ -1,9 +1,9 @@
 /**
  * Live2D Renderer - Handles Live2D model rendering with PixiJS
- * Supports Cubism 2.0 models (xiaomai uses .moc format)
+ * Supports Cubism 2.0 models (.model.json format with .moc)
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import * as PIXI from 'pixi.js';
 import { Live2DModel } from 'pixi-live2d-display/cubism2';
 import type { Live2DModelConfig, Live2DParam, Emotion } from '../types';
@@ -45,6 +45,13 @@ interface Live2DRendererProps {
   className?: string;
   onModelLoaded?: (model?: any) => void;
   onError?: (error: Error) => void;
+  live2dSettings?: {
+    modelScale: number;
+    positionX: number;
+    positionY: number;
+    idleMotion: boolean;
+    breathingAnimation: boolean;
+  };
 }
 
 // emotion to parameter mappings for standard Live2D models
@@ -99,15 +106,151 @@ export function Live2DRenderer({
   className = '',
   onModelLoaded,
   onError,
+  live2dSettings,
 }: Live2DRendererProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null!);
   const appRef = useRef<PIXI.Application | null>(null);
   const modelRef = useRef<any>(null);
   const mountedRef = useRef(true);
+  const breathingAnimationRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const live2dSettingsRef = useRef(live2dSettings);
+  const configRef = useRef(config);
+  const onModelLoadedRef = useRef(onModelLoaded);
+  const onErrorRef = useRef(onError);
+  // Store original model dimensions (before anchor/scale changes)
+  const originalDimensionsRef = useRef<{ width: number; height: number } | null>(null);
+  const anchorSetRef = useRef(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  // Initialize PixiJS application and load Live2D model
+  // Keep refs in sync with props
+  useEffect(() => {
+    live2dSettingsRef.current = live2dSettings;
+    configRef.current = config;
+    onModelLoadedRef.current = onModelLoaded;
+    onErrorRef.current = onError;
+  }, [live2dSettings, config, onModelLoaded, onError]);
+
+  // Helper function to apply scale to model (only when modelScale changes)
+  const applyScale = useCallback((model: any) => {
+    if (!model) return;
+
+    const settings = live2dSettingsRef.current;
+    // Use default value if settings are undefined
+    const modelScale = settings?.modelScale ?? 1;
+
+    // IMPORTANT: Get original dimensions BEFORE setting anchor
+    // Because changing anchor affects how model.width/height are calculated
+    if (!originalDimensionsRef.current) {
+      // Temporarily reset scale to get original dimensions
+      const currentScale = model.scale.x;
+      model.scale.set(1);
+      const modelWidth = model.width || 1;
+      const modelHeight = model.height || 1;
+      // Restore scale
+      model.scale.set(currentScale);
+      // Store original dimensions
+      originalDimensionsRef.current = { width: modelWidth, height: modelHeight };
+      console.log('[Live2D] Stored original dimensions (before anchor):', { modelWidth, modelHeight });
+    }
+
+    // Set anchor to center (only once, AFTER getting dimensions)
+    if (!anchorSetRef.current) {
+      model.anchor.set(0.5, 0.5);
+      anchorSetRef.current = true;
+    }
+
+    const { width: modelWidth, height: modelHeight } = originalDimensionsRef.current;
+
+    // Calculate scale to fit 80% of viewport (shorter dimension determines scale)
+    const scaleX = (window.innerWidth * 0.8) / modelWidth;
+    const scaleY = (window.innerHeight * 0.8) / modelHeight;
+    const baseScale = Math.min(scaleX, scaleY);
+
+    // Apply modelScale multiplier
+    model.scale.set(baseScale * modelScale);
+
+    console.log('[Live2D] Applied scale:', {
+      modelScale,
+      baseScale,
+      finalScale: baseScale * modelScale,
+      modelWidth,
+      modelHeight
+    });
+  }, []);
+
+  // Helper function to apply position to model (only when positionX/Y changes)
+  const applyPosition = useCallback((model: any) => {
+    if (!model) return;
+
+    const settings = live2dSettingsRef.current;
+    // Use default values if settings are undefined (positionX = 0 means centered)
+    const positionX = settings?.positionX ?? 0;
+    const positionY = settings?.positionY ?? 0;
+
+    // Use the model's actual current width/height for position calculation
+    // This accounts for any Live2D model-specific offsets or characteristics
+    const scaledWidth = model.width || 1;
+    const scaledHeight = model.height || 1;
+
+    console.log('[Live2D DEBUG] positionX input:', positionX, 'type:', typeof positionX);
+    console.log('[Live2D DEBUG] model dimensions:', {
+      width: model.width,
+      height: model.height,
+      scale: model.scale,
+      anchor: model.anchor
+    });
+
+    // New position logic: positionX = 0 means centered
+    // positionX is a percentage of screen width (-0.5 to 0.5)
+    // Calculate center position
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+
+    // positionX = 0 → model centered
+    // positionX = -0.5 → model moves left by 50% of screen width
+    // positionX = 0.5 → model moves right by 50% of screen width
+    const newX = centerX + positionX * window.innerWidth;
+    const newY = centerY + positionY * window.innerHeight;
+
+    console.log('[Live2D DEBUG] Calculation:', {
+      scaledWidth,
+      scaledHeight,
+      windowWidth: window.innerWidth,
+      windowHeight: window.innerHeight,
+      centerX,
+      centerY,
+      positionX,
+      positionY,
+      newX,
+      newY,
+      offsetX: positionX * window.innerWidth,
+      offsetY: positionY * window.innerHeight
+    });
+
+    model.x = newX;
+    model.y = newY;
+
+    console.log('[Live2D] Applied position:', {
+      positionX,
+      positionY,
+      scaledWidth,
+      scaledHeight,
+      finalX: model.x,
+      finalY: model.y,
+      centerX,
+      centerY
+    });
+  }, []);
+
+  // Combined function for initial setup
+  const applySettings = useCallback((model: any) => {
+    if (!model) return;
+    applyScale(model);
+    applyPosition(model);
+  }, [applyScale, applyPosition]);
+
+  // Initialize PixiJS application and load Live2D model (run once)
   useEffect(() => {
     if (!canvasRef.current) return;
 
@@ -117,12 +260,7 @@ export function Live2DRenderer({
     const initPixi = async () => {
       try {
         console.log('[Live2D] Initializing PixiJS...');
-
-        // Check if Live2D library is available
-        if (typeof (window as any).Live2D === 'undefined') {
-          throw new Error('Live2D Cubism 2 SDK not loaded. Please ensure live2d.min.js is loaded before the app.');
-        }
-        console.log('[Live2D] Live2D SDK found:', (window as any).Live2D);
+        console.log('[Live2D] Using Cubism 2.0 renderer (.model.json)');
 
         // Configure PIXI renderer for Live2D compatibility
         const rendererOptions = {
@@ -144,49 +282,28 @@ export function Live2DRenderer({
         console.log('[Live2D] PixiJS Application created');
 
         // Load Live2D model from model.json
-        console.log('[Live2D] Loading model from:', config.modelUrl);
-        model = await Live2DModel.from(config.modelUrl);
+        const currentConfig = configRef.current;
+        console.log('[Live2D] Loading model from:', currentConfig.modelUrl);
+        model = await Live2DModel.from(currentConfig.modelUrl);
         modelRef.current = model;
         console.log('[Live2D] Model loaded successfully');
 
         // Add model to stage
         app.stage.addChild(model);
 
-        // Apply layout settings from model.json if available
-        if (model.layout) {
-          const { width, center_x, center_y } = model.layout;
-          if (width !== undefined) {
-            const scale = (window.innerWidth * 0.8) / (model.width * width);
-            model.scale.set(scale * width);
-          } else {
-            const scale = Math.min(
-              (window.innerWidth * 0.8) / model.width,
-              (window.innerHeight * 0.8) / model.height
-            );
-            model.scale.set(scale);
-          }
-          if (center_x !== undefined) model.x = window.innerWidth / 2 + center_x * window.innerWidth;
-          else model.x = window.innerWidth / 2;
-          if (center_y !== undefined) model.y = window.innerHeight / 2 + center_y * window.innerHeight;
-          else model.y = window.innerHeight / 2;
-        } else {
-          // Scale and center the model
-          const scale = Math.min(
-            (window.innerWidth * 0.8) / model.width,
-            (window.innerHeight * 0.8) / model.height
-          );
-          model.scale.set(scale);
-          model.x = window.innerWidth / 2;
-          model.y = window.innerHeight / 2;
-        }
+        // Apply Live2D settings (scale, position)
+        applySettings(model);
 
-        // Enable auto-breathing (idle motion)
-        model.motion('idle', 0);
+        // Enable idle motion based on settings
+        const currentSettings = live2dSettingsRef.current;
+        if (currentSettings?.idleMotion !== false) {
+          model.motion('idle', 0);
+        }
 
         // Check if component is still mounted before updating state
         if (mountedRef.current) {
           setIsLoaded(true);
-          onModelLoaded?.(model);
+          onModelLoadedRef.current?.(model);
         }
         console.log('[Live2D] Initialization complete');
       } catch (error) {
@@ -195,7 +312,7 @@ export function Live2DRenderer({
         if (mountedRef.current) {
           const errorMsg = error instanceof Error ? error.message : String(error);
           setLoadError(errorMsg);
-          onError?.(error as Error);
+          onErrorRef.current?.(error as Error);
         }
       }
     };
@@ -208,32 +325,7 @@ export function Live2DRenderer({
 
       try {
         app.renderer.resize(window.innerWidth, window.innerHeight);
-
-        if (model.layout) {
-          const { width, center_x, center_y } = model.layout;
-          if (width !== undefined) {
-            const scale = (window.innerWidth * 0.8) / (model.width * width);
-            model.scale.set(scale * width);
-          } else {
-            const scale = Math.min(
-              (window.innerWidth * 0.8) / model.width,
-              (window.innerHeight * 0.8) / model.height
-            );
-            model.scale.set(scale);
-          }
-          if (center_x !== undefined) model.x = window.innerWidth / 2 + center_x * window.innerWidth;
-          else model.x = window.innerWidth / 2;
-          if (center_y !== undefined) model.y = window.innerHeight / 2 + center_y * window.innerHeight;
-          else model.y = window.innerHeight / 2;
-        } else {
-          const scale = Math.min(
-            (window.innerWidth * 0.8) / model.width,
-            (window.innerHeight * 0.8) / model.height
-          );
-          model.scale.set(scale);
-          model.x = window.innerWidth / 2;
-          model.y = window.innerHeight / 2;
-        }
+        applySettings(model);
       } catch (e) {
         console.warn('[Live2D] Resize error:', e);
       }
@@ -275,7 +367,7 @@ export function Live2DRenderer({
 
       console.log('[Live2D] Cleanup complete');
     };
-  }, [config, onModelLoaded, onError]);
+  }, []); // Run only once
 
   // Expose model control methods via ref
   useEffect(() => {
@@ -285,6 +377,79 @@ export function Live2DRenderer({
     (window as any).live2dModel = modelRef.current;
     console.log('[Live2D] Model exposed to window.live2dModel');
   }, [isLoaded]);
+
+  // Apply scale when it changes (also update position since scale affects valid position range)
+  useEffect(() => {
+    if (modelRef.current) {
+      applyScale(modelRef.current);
+      // Re-apply position since scale affects the valid position bounds
+      applyPosition(modelRef.current);
+    }
+  }, [live2dSettings?.modelScale, applyScale, applyPosition]);
+
+  // Apply position when it changes
+  useEffect(() => {
+    if (modelRef.current) {
+      applyPosition(modelRef.current);
+    }
+  }, [live2dSettings?.positionX, live2dSettings?.positionY, applyPosition]);
+
+  // Handle idleMotion setting changes
+  useEffect(() => {
+    const model = modelRef.current;
+    if (!model) return;
+
+    if (live2dSettings?.idleMotion !== false) {
+      // Start idle motion if not already running
+      // Using a low priority motion that won't interrupt important motions
+      model.motion('idle', 0, 1);
+    }
+    // Note: We don't stop idle motion when disabled since Live2D handles this internally
+    // and stopping it might interrupt other motions
+  }, [live2dSettings?.idleMotion]);
+
+  // Breathing animation control
+  useEffect(() => {
+    if (!modelRef.current || live2dSettings === undefined) return;
+
+    if (live2dSettings.breathingAnimation) {
+      // Start breathing animation
+      breathingAnimationRef.current = setInterval(() => {
+        const model = modelRef.current;
+        if (!model) return;
+
+        // Breathing cycle: expand and contract
+        const cycle = (Date.now() % 3000) / 3000; // 3 second cycle
+        const breathValue = Math.sin(cycle * Math.PI * 2) * 0.1;
+        setModelParams(model, [{ name: 'ParamBreath', value: breathValue }]);
+      }, 50); // Update every 50ms
+    } else {
+      // Stop breathing animation
+      if (breathingAnimationRef.current) {
+        clearInterval(breathingAnimationRef.current);
+        breathingAnimationRef.current = null;
+      }
+      // Reset breathing parameter
+      if (modelRef.current) {
+        setModelParams(modelRef.current, [{ name: 'ParamBreath', value: 0 }]);
+      }
+    }
+
+    return () => {
+      if (breathingAnimationRef.current) {
+        clearInterval(breathingAnimationRef.current);
+      }
+    };
+  }, [live2dSettings?.breathingAnimation]);
+
+  // Cleanup breathing animation on unmount
+  useEffect(() => {
+    return () => {
+      if (breathingAnimationRef.current) {
+        clearInterval(breathingAnimationRef.current);
+      }
+    };
+  }, []);
 
   // Show placeholder when Live2D fails to load
   if (loadError) {
@@ -336,26 +501,54 @@ export function setModelParams(model: any, params: Live2DParam[]): void {
 
   params.forEach(({ name, value }) => {
     try {
-      // pixi-live2d-display for Cubism 2.0
-      // Access the internal Live2D model directly
-      if (model.internalModel && model.internalModel.live2DModel) {
-        const settings = model.internalModel.settings;
+      // pixi-live2d-display (auto-detects Cubism version)
+      const internalModel = model.internalModel;
+
+      if (!internalModel) {
+        console.warn('[Live2D] No internalModel found');
+        return;
+      }
+
+      // Check for Cubism 4.0 (has coreModel)
+      if (internalModel.coreModel) {
+        const coreModel = internalModel.coreModel;
+
+        // Cubism 4: Find parameter by name and get its ID
+        const paramCount = coreModel.getParameterCount?.() ?? coreModel._parameterCount ?? 0;
+        let paramId: number | undefined;
+
+        for (let i = 0; i < paramCount; i++) {
+          const paramName = coreModel.getParameterName?.(i);
+          if (paramName === name) {
+            paramId = i;
+            break;
+          }
+        }
+
+        if (paramId !== undefined) {
+          coreModel.setParameterValue?.(paramId, value);
+          console.log('[Live2D] Cubism4: Set param:', name, '=', value, '(id:', paramId, ')');
+        } else {
+          console.warn('[Live2D] Cubism4: Parameter not found:', name);
+        }
+      }
+      // Check for Cubism 2.0 (has live2DModel)
+      else if (internalModel.live2DModel) {
+        const live2DModel = internalModel.live2DModel;
+        const settings = internalModel.settings;
+
         if (settings) {
-          // Get parameter index by name
+          // Cubism 2: Get parameter index by name
           const paramIndex = settings.getParamIndex(name);
           if (paramIndex !== undefined && paramIndex >= 0) {
-            model.internalModel.live2DModel.setParamFloat(paramIndex, value);
-            console.log('[Live2D] Set param:', name, '=', value, '(index:', paramIndex, ')');
+            live2DModel.setParamFloat(paramIndex, value);
+            console.log('[Live2D] Cubism2: Set param:', name, '=', value, '(index:', paramIndex, ')');
           } else {
-            console.warn('[Live2D] Parameter not found:', name);
+            console.warn('[Live2D] Cubism2: Parameter not found:', name);
           }
         }
       } else {
-        // Try direct property access as fallback
-        console.warn('[Live2D] internalModel not available, trying direct access');
-        if (typeof model.setParameter === 'function') {
-          model.setParameter(name, value);
-        }
+        console.warn('[Live2D] Unknown model structure, available keys:', Object.keys(internalModel));
       }
     } catch (e) {
       console.warn('[Live2D] Failed to set param:', name, value, e);
