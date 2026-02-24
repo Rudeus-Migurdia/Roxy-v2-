@@ -115,11 +115,9 @@ function App() {
   const handleMessage = useCallback((message: WSMessage) => {
     // Use payload for all message types (backend sends payload, not data)
     const payload = (message as any).payload || message.data;
-    console.log('WS Message:', message.type, payload);
     switch (message.type) {
       case 'connected': {
         // 'connected' is not in WSMessageType but is sent by backend
-        console.log('WebSocket connected:', payload);
         break;
       }
       case 'state': {
@@ -152,23 +150,19 @@ function App() {
       }
 
       case 'user_text':
-        console.log('User text received:', payload);
         break;
 
       case 'audio':
-        console.log('Audio received:', payload);
         // Play audio if enabled
         if (config.enableAudio && audioProcessorRef.current) {
           const audioData = payload as { audio: string; format: string; sampleRate: number };
           audioProcessorRef.current.play(audioData.audio)
-            .then(() => console.log('[App] Audio playback started'))
             .catch(e => console.error('[App] Audio playback failed:', e));
         }
         break;
 
       case 'emotion': {
         const newEmotion = (payload as { emotion: string }).emotion;
-        console.log('Emotion:', newEmotion);
         // Trigger transition on emotion change (using ref to get latest emotion)
         const prevEmotion = currentEmotionRef.current;
         if (newEmotion !== prevEmotion && newEmotion !== 'neutral' && triggerRef.current) {
@@ -185,7 +179,6 @@ function App() {
       }
 
       case 'motion':
-        console.log('Motion:', payload);
         // Trigger motion on Live2D model if available
         if (modelRef.current) {
           import('./live2d/Live2DRenderer').then(({ triggerMotion }) => {
@@ -196,7 +189,6 @@ function App() {
         break;
 
       case 'param':
-        console.log('Param:', payload);
         // Direct parameter setting
         if (modelRef.current) {
           import('./live2d/Live2DRenderer').then(({ setModelParams }) => {
@@ -205,15 +197,12 @@ function App() {
           });
         }
         break;
-
-      default:
-        console.log('[App] Unknown message type:', message.type);
     }
   }, [config.enableAudio]); // Minimal dependencies - uses refs for state access
 
   // Stable state change handler
   const handleStateChange = useCallback((state: string) => {
-    console.log('WS State:', state);
+    // State change handling
   }, []);
 
   // Use WebSocket hook with stable callbacks
@@ -226,9 +215,6 @@ function App() {
 
   // Log configuration on mount and connect
   useEffect(() => {
-    console.log('App mounted');
-    console.log('Config:', config);
-    console.log('[App] Connecting to WebSocket:', config.wsUrl);
     // Auto-connect on mount (only once)
     connect();
   }, [connect]); // Added connect dependency
@@ -252,10 +238,8 @@ function App() {
 
   // Handle Live2D model loaded
   const handleModelLoaded = useCallback((model?: any) => {
-    console.log('Live2D model loaded', model ? '(with model reference)' : '(no model reference)');
     if (model) {
       modelRef.current = model;
-      console.log('[App] Model reference stored:', model);
     }
     setLive2dReady(true);
 
@@ -274,7 +258,6 @@ function App() {
           }
         }
       });
-      console.log('[App] AudioProcessor initialized for lip-sync');
     }
   }, [config.enableLipSync]);
 

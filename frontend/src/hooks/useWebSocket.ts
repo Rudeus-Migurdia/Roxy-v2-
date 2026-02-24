@@ -46,19 +46,16 @@ export function useWebSocket(
     if (currentState === WebSocket.OPEN ||
         currentState === WebSocket.CONNECTING ||
         currentState === WebSocket.CLOSING) {
-      console.log('[useWebSocket] Connection already in progress, current state:', currentState);
       return;
     }
 
     // 检查重连次数限制
     if (reconnectAttemptsRef.current >= MAX_RECONNECT_ATTEMPTS) {
-      console.warn(`[useWebSocket] Maximum reconnection attempts (${MAX_RECONNECT_ATTEMPTS}) reached`);
       setConnectionState('error');
       latestOptionsRef.current.onStateChange?.('error');
       return;
     }
 
-    console.log('[useWebSocket] Connecting to:', url);
     setConnectionState('connecting');
     latestOptionsRef.current.onStateChange?.('connecting');
 
@@ -81,7 +78,6 @@ export function useWebSocket(
       ws.onmessage = (event) => {
         try {
           const message: WSMessage = JSON.parse(event.data);
-          console.log('[useWebSocket] Received:', message.type, message);
           latestOptionsRef.current.onMessage?.(message);
 
           // 处理ping/pong以维持连接健康
@@ -123,8 +119,6 @@ export function useWebSocket(
           reconnectTimeoutRef.current = window.setTimeout(() => {
             connect();
           }, backoffDelay);
-
-          console.log(`Reconnection attempt ${reconnectAttemptsRef.current}/${MAX_RECONNECT_ATTEMPTS} in ${backoffDelay}ms`);
         }
       };
     } catch (error) {
@@ -146,15 +140,11 @@ export function useWebSocket(
 
     // 关闭WebSocket连接
     if (wsRef.current) {
-      try {
-        wsRef.current.onopen = null;
-        wsRef.current.onmessage = null;
-        wsRef.current.onerror = null;
-        wsRef.current.onclose = null;
-        wsRef.current.close();
-      } catch (e) {
-        console.warn('Error closing WebSocket:', e);
-      }
+      wsRef.current.onopen = null;
+      wsRef.current.onmessage = null;
+      wsRef.current.onerror = null;
+      wsRef.current.onclose = null;
+      wsRef.current.close();
       wsRef.current = null;
     }
 
@@ -165,19 +155,13 @@ export function useWebSocket(
   const sendMessage = useCallback(
     (type: WSMessageType, data: unknown) => {
       const ws = wsRef.current;
-      if (!ws) {
-        console.warn('[useWebSocket] Cannot send message: WebSocket is null');
-        return;
-      }
+      if (!ws) return;
       if (ws.readyState === WebSocket.OPEN) {
         // Backend expects "payload" field for user_text messages
         const message: WSMessage = type === 'user_text'
           ? { type, payload: data, timestamp: Date.now() }
           : { type, data, timestamp: Date.now() };
-        console.log('[useWebSocket] Sending:', message);
         ws.send(JSON.stringify(message));
-      } else {
-        console.warn('[useWebSocket] Cannot send message: WebSocket not connected, state:', ws.readyState);
       }
     },
     []

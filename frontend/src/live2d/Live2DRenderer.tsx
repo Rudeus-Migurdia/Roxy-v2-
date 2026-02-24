@@ -33,11 +33,9 @@ try {
       // Call original contextChange
       return originalContextChange.call(this, gl);
     };
-
-    console.log('[Live2D] Patched AbstractBatchRenderer.contextChange');
   }
 } catch (e) {
-  console.warn('[Live2D] Patch warning:', e);
+  // Silently ignore patch errors
 }
 
 interface Live2DRendererProps {
@@ -151,7 +149,6 @@ export function Live2DRenderer({
       model.scale.set(currentScale);
       // Store original dimensions
       originalDimensionsRef.current = { width: modelWidth, height: modelHeight };
-      console.log('[Live2D] Stored original dimensions (before anchor):', { modelWidth, modelHeight });
     }
 
     // Set anchor to center (only once, AFTER getting dimensions)
@@ -169,14 +166,6 @@ export function Live2DRenderer({
 
     // Apply modelScale multiplier
     model.scale.set(baseScale * modelScale);
-
-    console.log('[Live2D] Applied scale:', {
-      modelScale,
-      baseScale,
-      finalScale: baseScale * modelScale,
-      modelWidth,
-      modelHeight
-    });
   }, []);
 
   // Helper function to apply position to model (only when positionX/Y changes)
@@ -193,14 +182,6 @@ export function Live2DRenderer({
     const scaledWidth = model.width || 1;
     const scaledHeight = model.height || 1;
 
-    console.log('[Live2D DEBUG] positionX input:', positionX, 'type:', typeof positionX);
-    console.log('[Live2D DEBUG] model dimensions:', {
-      width: model.width,
-      height: model.height,
-      scale: model.scale,
-      anchor: model.anchor
-    });
-
     // New position logic: positionX = 0 means centered
     // positionX is a percentage of screen width (-0.5 to 0.5)
     // Calculate center position
@@ -213,34 +194,8 @@ export function Live2DRenderer({
     const newX = centerX + positionX * window.innerWidth;
     const newY = centerY + positionY * window.innerHeight;
 
-    console.log('[Live2D DEBUG] Calculation:', {
-      scaledWidth,
-      scaledHeight,
-      windowWidth: window.innerWidth,
-      windowHeight: window.innerHeight,
-      centerX,
-      centerY,
-      positionX,
-      positionY,
-      newX,
-      newY,
-      offsetX: positionX * window.innerWidth,
-      offsetY: positionY * window.innerHeight
-    });
-
     model.x = newX;
     model.y = newY;
-
-    console.log('[Live2D] Applied position:', {
-      positionX,
-      positionY,
-      scaledWidth,
-      scaledHeight,
-      finalX: model.x,
-      finalY: model.y,
-      centerX,
-      centerY
-    });
   }, []);
 
   // Combined function for initial setup
@@ -259,9 +214,6 @@ export function Live2DRenderer({
 
     const initPixi = async () => {
       try {
-        console.log('[Live2D] Initializing PixiJS...');
-        console.log('[Live2D] Using Cubism 2.0 renderer (.model.json)');
-
         // Configure PIXI renderer for Live2D compatibility
         const rendererOptions = {
           view: canvasRef.current,
@@ -279,14 +231,11 @@ export function Live2DRenderer({
         app = new PIXI.Application(rendererOptions);
 
         appRef.current = app;
-        console.log('[Live2D] PixiJS Application created');
 
         // Load Live2D model from model.json
         const currentConfig = configRef.current;
-        console.log('[Live2D] Loading model from:', currentConfig.modelUrl);
         model = await Live2DModel.from(currentConfig.modelUrl);
         modelRef.current = model;
-        console.log('[Live2D] Model loaded successfully');
 
         // Add model to stage
         app.stage.addChild(model);
@@ -305,7 +254,6 @@ export function Live2DRenderer({
           setIsLoaded(true);
           onModelLoadedRef.current?.(model);
         }
-        console.log('[Live2D] Initialization complete');
       } catch (error) {
         console.error('[Live2D] Failed to load model:', error);
         // Check if component is still mounted before updating state
@@ -364,18 +312,13 @@ export function Live2DRenderer({
           console.warn('[Live2D] App cleanup error:', e);
         }
       }
-
-      console.log('[Live2D] Cleanup complete');
     };
   }, []); // Run only once
 
   // Expose model control methods via ref
   useEffect(() => {
     if (!modelRef.current) return;
-
-    // Make model methods available globally for debugging
-    (window as any).live2dModel = modelRef.current;
-    console.log('[Live2D] Model exposed to window.live2dModel');
+    // Model is ready
   }, [isLoaded]);
 
   // Apply scale when it changes (also update position since scale affects valid position range)
@@ -494,20 +437,14 @@ export function Live2DRenderer({
 
 // Helper functions for model control
 export function setModelParams(model: any, params: Live2DParam[]): void {
-  if (!model) {
-    console.warn('[Live2D] Model is null or undefined');
-    return;
-  }
+  if (!model) return;
 
   params.forEach(({ name, value }) => {
     try {
       // pixi-live2d-display (auto-detects Cubism version)
       const internalModel = model.internalModel;
 
-      if (!internalModel) {
-        console.warn('[Live2D] No internalModel found');
-        return;
-      }
+      if (!internalModel) return;
 
       // Check for Cubism 4.0 (has coreModel)
       if (internalModel.coreModel) {
@@ -527,9 +464,6 @@ export function setModelParams(model: any, params: Live2DParam[]): void {
 
         if (paramId !== undefined) {
           coreModel.setParameterValue?.(paramId, value);
-          console.log('[Live2D] Cubism4: Set param:', name, '=', value, '(id:', paramId, ')');
-        } else {
-          console.warn('[Live2D] Cubism4: Parameter not found:', name);
         }
       }
       // Check for Cubism 2.0 (has live2DModel)
@@ -542,16 +476,11 @@ export function setModelParams(model: any, params: Live2DParam[]): void {
           const paramIndex = settings.getParamIndex(name);
           if (paramIndex !== undefined && paramIndex >= 0) {
             live2DModel.setParamFloat(paramIndex, value);
-            console.log('[Live2D] Cubism2: Set param:', name, '=', value, '(index:', paramIndex, ')');
-          } else {
-            console.warn('[Live2D] Cubism2: Parameter not found:', name);
           }
         }
-      } else {
-        console.warn('[Live2D] Unknown model structure, available keys:', Object.keys(internalModel));
       }
     } catch (e) {
-      console.warn('[Live2D] Failed to set param:', name, value, e);
+      // Silently fail for parameter setting errors
     }
   });
 }
@@ -567,22 +496,15 @@ export function triggerMotion(
   index: number,
   priority = 3
 ): void {
-  if (!model) {
-    console.warn('[Live2D] Model is null, cannot trigger motion');
-    return;
-  }
+  if (!model) return;
 
   try {
     // pixi-live2d-display motion API
     if (typeof model.motion === 'function') {
       model.motion(group, index, priority);
-      console.log('[Live2D] Triggered motion:', group, index, 'priority:', priority);
     } else if (model.motionManager && typeof model.motionManager.startMotion === 'function') {
       // Alternative API via motionManager
       model.motionManager.startMotion(group, index, priority);
-      console.log('[Live2D] Triggered motion via motionManager:', group, index);
-    } else {
-      console.warn('[Live2D] No motion method available on model');
     }
   } catch (e) {
     console.error('[Live2D] Failed to trigger motion:', group, index, e);

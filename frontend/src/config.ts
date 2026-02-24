@@ -34,14 +34,3 @@ export const config: AppConfig = {
   enableAudio: import.meta.env.VITE_ENABLE_AUDIO !== 'false',
   enableLipSync: import.meta.env.VITE_ENABLE_LIP_SYNC !== 'false',
 };
-
-// Debug mode
-export const DEBUG = import.meta.env.MODE === 'development';
-
-// Log configuration in debug mode
-if (DEBUG) {
-  console.log('Live2D Frontend Configuration:', {
-    ...config,
-    wsUrl: getApiUrl(), // Show full URL
-  });
-}

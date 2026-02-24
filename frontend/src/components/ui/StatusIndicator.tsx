@@ -26,8 +26,6 @@ export function StatusIndicator({
       case 'disconnected':
         return 'error';
       default:
-        // Treat unknown states as errors
-        console.warn('[StatusIndicator] Unknown connection state:', connectionState);
         return 'error';
     }
   };
