@@ -19,6 +19,7 @@ from nakari.models import Attachment, Event, EventType
 
 if TYPE_CHECKING:
     from fastapi import WebSocket
+    from nakari.journal import JournalStore
 
 _log = structlog.get_logger("websocket_input")
 
@@ -30,9 +31,10 @@ class WebSocketInput:
     and converts them into Mailbox events that nakari can process.
     """
 
-    def __init__(self, mailbox: Mailbox, config: Config) -> None:
+    def __init__(self, mailbox: Mailbox, config: Config, journal: JournalStore | None = None) -> None:
         self._mailbox = mailbox
         self._config = config
+        self._journal = journal
         self._log = _log
 
     async def handle_message(self, ws: WebSocket, message: str) -> None:
@@ -78,6 +80,11 @@ class WebSocketInput:
             metadata={"source": "websocket"},
         )
         await self._mailbox.put(event)
+
+        # Log user message to journal for title generation
+        if self._journal:
+            await self._journal.log_message(role="user", content=content)
+
         self._log.info("user_text_received", content=content[:50])
 
     async def _handle_audio_blob(self, payload: dict) -> None:

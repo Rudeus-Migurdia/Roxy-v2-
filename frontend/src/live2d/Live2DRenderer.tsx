@@ -7,6 +7,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import * as PIXI from 'pixi.js';
 import { Live2DModel } from 'pixi-live2d-display/cubism2';
 import type { Live2DModelConfig, Live2DParam, Emotion } from '../types';
+import { getModelUrl } from '../contexts/SettingsContext';
 
 // Expose PIXI to window for pixi-live2d-display
 if (typeof window !== 'undefined') {
@@ -44,6 +45,7 @@ interface Live2DRendererProps {
   onModelLoaded?: (model?: any) => void;
   onError?: (error: Error) => void;
   live2dSettings?: {
+    model: string;
     modelScale: number;
     positionX: number;
     positionY: number;
@@ -120,6 +122,10 @@ export function Live2DRenderer({
   const anchorSetRef = useRef(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [currentModelId, setCurrentModelId] = useState<string | null>(null);
+  // Track idle animation loop state
+  const idleLoopEnabledRef = useRef(false);
+  const idleMotionIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Keep refs in sync with props
   useEffect(() => {
@@ -176,11 +182,6 @@ export function Live2DRenderer({
     // Use default values if settings are undefined (positionX = 0 means centered)
     const positionX = settings?.positionX ?? 0;
     const positionY = settings?.positionY ?? 0;
-
-    // Use the model's actual current width/height for position calculation
-    // This accounts for any Live2D model-specific offsets or characteristics
-    const scaledWidth = model.width || 1;
-    const scaledHeight = model.height || 1;
 
     // New position logic: positionX = 0 means centered
     // positionX is a percentage of screen width (-0.5 to 0.5)
@@ -252,6 +253,7 @@ export function Live2DRenderer({
         // Check if component is still mounted before updating state
         if (mountedRef.current) {
           setIsLoaded(true);
+          setCurrentModelId(live2dSettingsRef.current?.model ?? null);
           onModelLoadedRef.current?.(model);
         }
       } catch (error) {
@@ -315,6 +317,63 @@ export function Live2DRenderer({
     };
   }, []); // Run only once
 
+  // Handle model switching when live2dSettings.model changes
+  useEffect(() => {
+    const newModelId = live2dSettings?.model;
+    if (newModelId === undefined || newModelId === currentModelId) return;
+
+    const model = modelRef.current;
+    const app = appRef.current;
+    if (!model || !app || !canvasRef.current) return;
+
+    const switchModel = async () => {
+      try {
+        // Get new model URL
+        const newModelUrl = getModelUrl(newModelId);
+
+        // Remove current model from stage
+        if (app.stage) {
+          app.stage.removeChild(model);
+        }
+
+        // Destroy current model
+        model.destroy({ children: true });
+
+        // Load new model
+        const newModel = await Live2DModel.from(newModelUrl);
+        modelRef.current = newModel;
+
+        // Add new model to stage
+        app.stage.addChild(newModel);
+
+        // Reset state that needs to be reapplied
+        anchorSetRef.current = false;
+        originalDimensionsRef.current = null;
+
+        // Apply Live2D settings (scale, position)
+        applySettings(newModel);
+
+        // Enable idle motion based on settings
+        if (live2dSettings?.idleMotion !== false) {
+          newModel.motion('idle', 0);
+        }
+
+        // Update current model ID
+        setCurrentModelId(newModelId);
+        onModelLoadedRef.current?.(newModel);
+      } catch (error) {
+        console.error('[Live2D] Failed to switch model:', error);
+        if (mountedRef.current) {
+          const errorMsg = error instanceof Error ? error.message : String(error);
+          setLoadError(errorMsg);
+          onErrorRef.current?.(error as Error);
+        }
+      }
+    };
+
+    switchModel();
+  }, [live2dSettings?.model, currentModelId, applySettings]);
+
   // Expose model control methods via ref
   useEffect(() => {
     if (!modelRef.current) return;
@@ -337,19 +396,63 @@ export function Live2DRenderer({
     }
   }, [live2dSettings?.positionX, live2dSettings?.positionY, applyPosition]);
 
-  // Handle idleMotion setting changes
+  // Handle idleMotion setting changes and model changes
   useEffect(() => {
     const model = modelRef.current;
     if (!model) return;
 
-    if (live2dSettings?.idleMotion !== false) {
-      // Start idle motion if not already running
-      // Using a low priority motion that won't interrupt important motions
-      model.motion('idle', 0, 1);
+    const shouldLoop = live2dSettings?.idleMotion !== false;
+    idleLoopEnabledRef.current = shouldLoop;
+
+    // Clear any existing interval
+    if (idleMotionIntervalRef.current) {
+      clearInterval(idleMotionIntervalRef.current);
+      idleMotionIntervalRef.current = null;
     }
-    // Note: We don't stop idle motion when disabled since Live2D handles this internally
-    // and stopping it might interrupt other motions
-  }, [live2dSettings?.idleMotion]);
+
+    if (shouldLoop) {
+      const startIdleLoop = () => {
+        if (!modelRef.current || !idleLoopEnabledRef.current) return;
+
+        // Start idle animation
+        modelRef.current.motion('idle', 0, 1);
+
+        // Set up interval to check and restart animation
+        idleMotionIntervalRef.current = setInterval(() => {
+          if (!modelRef.current || !idleLoopEnabledRef.current) {
+            if (idleMotionIntervalRef.current) {
+              clearInterval(idleMotionIntervalRef.current);
+              idleMotionIntervalRef.current = null;
+            }
+            return;
+          }
+
+          // Check if idle animation is still playing
+          const motionManager = modelRef.current.motionManager;
+          if (motionManager) {
+            const isPlaying = motionManager.isPlaying();
+            if (!isPlaying) {
+              // Restart idle animation
+              modelRef.current.motion('idle', 0, 1);
+            }
+          } else {
+            // Fallback: just restart periodically
+            modelRef.current.motion('idle', 0, 1);
+          }
+        }, 3000); // Check every 3 seconds
+      };
+
+      startIdleLoop();
+    }
+
+    // Cleanup function
+    return () => {
+      if (idleMotionIntervalRef.current) {
+        clearInterval(idleMotionIntervalRef.current);
+        idleMotionIntervalRef.current = null;
+      }
+    };
+  }, [live2dSettings?.idleMotion, currentModelId]); // Add currentModelId to re-init on model switch
 
   // Breathing animation control
   useEffect(() => {
@@ -437,56 +540,86 @@ export function Live2DRenderer({
 
 // Helper functions for model control
 export function setModelParams(model: any, params: Live2DParam[]): void {
-  if (!model) return;
+  if (!model) {
+    console.log('[Live2D] setModelParams: model is null');
+    return;
+  }
+
+  const internalModel = model.internalModel;
+  if (!internalModel) {
+    console.log('[Live2D] setModelParams: internalModel is null');
+    return;
+  }
+
+  // Log model structure once
+  console.log('[Live2D] internalModel has live2DModel:', !!internalModel.live2DModel);
+  console.log('[Live2D] internalModel has coreModel:', !!internalModel.coreModel);
+
+  // Check if model has settings (Cubism 2.0)
+  if (internalModel.settings) {
+    console.log('[Live2D] internalModel has settings (Cubism 2.0)');
+    // Try to list available parameters
+    const settings = internalModel.settings;
+    console.log('[Live2D] settings keys:', Object.keys(settings));
+    // Try getParamIndex
+    try {
+      const testIndex = settings.getParamIndex('ParamEyeLOpen');
+      console.log('[Live2D] getParamIndex("ParamEyeLOpen"):', testIndex);
+    } catch (e) {
+      console.log('[Live2D] getParamIndex error:', e);
+    }
+  }
 
   params.forEach(({ name, value }) => {
     try {
-      // pixi-live2d-display (auto-detects Cubism version)
-      const internalModel = model.internalModel;
-
-      if (!internalModel) return;
-
-      // Check for Cubism 4.0 (has coreModel)
-      if (internalModel.coreModel) {
-        const coreModel = internalModel.coreModel;
-
-        // Cubism 4: Find parameter by name and get its ID
-        const paramCount = coreModel.getParameterCount?.() ?? coreModel._parameterCount ?? 0;
-        let paramId: number | undefined;
-
-        for (let i = 0; i < paramCount; i++) {
-          const paramName = coreModel.getParameterName?.(i);
-          if (paramName === name) {
-            paramId = i;
-            break;
-          }
-        }
-
-        if (paramId !== undefined) {
-          coreModel.setParameterValue?.(paramId, value);
-        }
-      }
-      // Check for Cubism 2.0 (has live2DModel)
-      else if (internalModel.live2DModel) {
+      // Try Cubism 2.0 approach first (xiaomai model is .moc format)
+      if (internalModel.live2DModel) {
         const live2DModel = internalModel.live2DModel;
-        const settings = internalModel.settings;
 
-        if (settings) {
-          // Cubism 2: Get parameter index by name
-          const paramIndex = settings.getParamIndex(name);
+        // Method 1: Try using parameter name directly as string ID
+        if (typeof live2DModel.setParamFloat === 'function') {
+          live2DModel.setParamFloat(name, value);
+          console.log('[Live2D] Cubism2: Set param', name, '=', value, '(using string ID)');
+          return;
+        }
+
+        // Method 2: Try using settings to get index
+        if (internalModel.settings) {
+          const paramIndex = internalModel.settings.getParamIndex(name);
           if (paramIndex !== undefined && paramIndex >= 0) {
             live2DModel.setParamFloat(paramIndex, value);
+            console.log('[Live2D] Cubism2: Set param', name, '=', value, 'at index', paramIndex);
+            return;
           }
         }
+
+        console.log('[Live2D] Cubism2: Param NOT found:', name);
+      }
+
+      // Try Cubism 4.0 approach
+      if (internalModel.coreModel) {
+        const coreModel = internalModel.coreModel;
+        // Try direct parameter access if available
+        if ((coreModel as any)._parameters) {
+          const param = (coreModel as any)._parameters.find((p: any) => p.name === name);
+          if (param) {
+            param.value = value;
+            console.log('[Live2D] Cubism4: Set param', name, '=', value);
+            return;
+          }
+        }
+        console.log('[Live2D] Cubism4: Param NOT found:', name);
       }
     } catch (e) {
-      // Silently fail for parameter setting errors
+      console.log('[Live2D] Error setting param', name, ':', e);
     }
   });
 }
 
 export function setModelEmotion(model: any, emotion: Emotion): void {
+  console.log('[Live2D] setModelEmotion called:', emotion);
   const params = EMOTION_PARAMS[emotion] || EMOTION_PARAMS.neutral;
+  console.log('[Live2D] Emotion params:', params);
   setModelParams(model, params);
 }
 

@@ -27,7 +27,9 @@ export function VoiceInputButton({
     duration: 0,
   });
 
+  // @ts-ignore - audioLevel reserved for future UI visualization
   const [audioLevel, setAudioLevel] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const recorderRef = useRef<AudioRecorder | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -71,6 +73,10 @@ export function VoiceInputButton({
 
   // 开始录音
   const handleStartRecording = useCallback(async () => {
+    if (isTransitioning) return;
+
+    setIsTransitioning(true);
+
     const recorder = new AudioRecorder({
       onStateChange: (state) => {
         setRecordingState(state);
@@ -86,48 +92,63 @@ export function VoiceInputButton({
       await recorder.startRecording();
     } catch (error) {
       console.error('Failed to start recording:', error);
-      // 可以在这里添加用户提示
+      setRecordingState({
+        isRecording: false,
+        duration: 0,
+      });
+    } finally {
+      setIsTransitioning(false);
     }
-  }, []);
+  }, [isTransitioning]);
 
   // 停止录音
   const handleStopRecording = useCallback(async () => {
-    if (!recorderRef.current) {
+    if (isTransitioning || !recorderRef.current) {
       return;
     }
 
-    const blob = await recorderRef.current.stopRecording();
+    setIsTransitioning(true);
 
-    if (blob) {
-      const base64 = await AudioRecorder.blobToBase64(blob);
-      onRecordingComplete(blob, base64);
+    try {
+      const blob = await recorderRef.current.stopRecording();
+
+      if (blob) {
+        const base64 = await AudioRecorder.blobToBase64(blob);
+        onRecordingComplete(blob, base64);
+      }
+
+      // 重置状态
+      setRecordingState({
+        isRecording: false,
+        duration: 0,
+      });
+      setAudioLevel(0);
+    } catch (error) {
+      console.error('Failed to stop recording:', error);
+    } finally {
+      setIsTransitioning(false);
     }
-
-    // 重置状态
-    setRecordingState({
-      isRecording: false,
-      duration: 0,
-    });
-    setAudioLevel(0);
-  }, [onRecordingComplete]);
+  }, [isTransitioning, onRecordingComplete]);
 
   // 点击处理
   const handleClick = useCallback(() => {
+    if (disabled || isTransitioning) return;
+
     if (recordingState.isRecording) {
       handleStopRecording();
     } else {
       handleStartRecording();
     }
-  }, [recordingState.isRecording, handleStartRecording, handleStopRecording]);
+  }, [disabled, isTransitioning, recordingState.isRecording, handleStartRecording, handleStopRecording]);
 
   return (
     <div className={`voice-input-container ${className}`}>
       <button
         className={`voice-input-button ${recordingState.isRecording ? 'recording' : ''}`}
         onClick={handleClick}
-        disabled={disabled}
-        title={recordingState.isRecording ? '点击停止录音' : '点击开始录音'}
-        aria-label={recordingState.isRecording ? '停止录音' : '开始录音'}
+        disabled={disabled || isTransitioning}
+        title={isTransitioning ? '处理中...' : recordingState.isRecording ? '点击停止录音' : '点击开始录音'}
+        aria-label={isTransitioning ? '处理中' : recordingState.isRecording ? '停止录音' : '开始录音'}
       >
         {/* 极简麦克风图标 */}
         <svg

@@ -22,11 +22,18 @@ export interface Translations {
   dark: string;
 
   // Live2D Settings
+  model: string;
   modelScale: string;
   positionX: string;
   positionY: string;
   idleMotion: string;
   breathingAnimation: string;
+
+  // Model names
+  model_xiaomai: string;
+  model_miku: string;
+  model_22_high: string;
+  model_33_high: string;
 
   // Audio Settings
   ttsVolume: string;
@@ -54,6 +61,15 @@ export interface Translations {
   newChat: string;
   recentHistory: string;
 
+  // Chat History
+  renameChat: string;
+  deleteChat: string;
+  deleteConfirm: string;
+  deleteConfirmMessage: string;
+  untitledChat: string;
+  today: string;
+  yesterday: string;
+
   // Input
   typeMessage: string;
   recording: string;
@@ -72,11 +88,16 @@ const translations: Record<Language, Translations> = {
     autoScrollChat: 'Show Chat History',
     light: 'Light',
     dark: 'Dark',
+    model: 'Model',
     modelScale: 'Model Scale',
     positionX: 'Position X',
     positionY: 'Position Y',
     idleMotion: 'Idle Motion',
     breathingAnimation: 'Breathing Animation',
+    model_xiaomai: 'Xiaomai (Umaru)',
+    model_miku: 'Miku',
+    model_22_high: 'Hiyori (22)',
+    model_33_high: 'Haru (33)',
     ttsVolume: 'TTS Volume',
     micSensitivity: 'Mic Sensitivity',
     lipSync: 'Lip Sync',
@@ -93,6 +114,13 @@ const translations: Record<Language, Translations> = {
     volumeValue: (value: number) => `${value}%`,
     newChat: 'New Chat',
     recentHistory: 'Recent History',
+    renameChat: 'Rename',
+    deleteChat: 'Delete',
+    deleteConfirm: 'Confirm Delete',
+    deleteConfirmMessage: 'Are you sure you want to delete this conversation?',
+    untitledChat: 'Untitled Chat',
+    today: 'Today',
+    yesterday: 'Yesterday',
     typeMessage: 'Type a message...',
     recording: 'Recording...',
     send: 'Send',
@@ -108,11 +136,16 @@ const translations: Record<Language, Translations> = {
     autoScrollChat: '显示对话记录',
     light: '浅色',
     dark: '深色',
+    model: '模型',
     modelScale: '模型缩放',
     positionX: '位置 X',
     positionY: '位置 Y',
     idleMotion: '空闲动作',
     breathingAnimation: '呼吸动画',
+    model_xiaomai: '小麦 (Umaru)',
+    model_miku: '初音',
+    model_22_high: '日葵 (22)',
+    model_33_high: '春 (33)',
     ttsVolume: '语音音量',
     micSensitivity: '麦克风灵敏度',
     lipSync: '口型同步',
@@ -129,6 +162,13 @@ const translations: Record<Language, Translations> = {
     volumeValue: (value: number) => `${value}%`,
     newChat: '新对话',
     recentHistory: '近期记录',
+    renameChat: '重命名',
+    deleteChat: '删除',
+    deleteConfirm: '确认删除',
+    deleteConfirmMessage: '确定要删除这个对话吗？',
+    untitledChat: '未命名对话',
+    today: '今天',
+    yesterday: '昨天',
     typeMessage: '输入消息...',
     recording: '录音中...',
     send: '发送',
@@ -144,11 +184,16 @@ const translations: Record<Language, Translations> = {
     autoScrollChat: '会話履歴を表示',
     light: 'ライト',
     dark: 'ダーク',
+    model: 'モデル',
     modelScale: 'モデルスケール',
     positionX: '位置 X',
     positionY: '位置 Y',
     idleMotion: 'アイドルモーション',
     breathingAnimation: '呼吸アニメーション',
+    model_xiaomai: '小麦 (ウマル)',
+    model_miku: 'ミク',
+    model_22_high: 'ヒヨリ (22)',
+    model_33_high: 'ハル (33)',
     ttsVolume: 'TTS音量',
     micSensitivity: 'マイク感度',
     lipSync: 'リップシンク',
@@ -165,6 +210,13 @@ const translations: Record<Language, Translations> = {
     volumeValue: (value: number) => `${value}%`,
     newChat: '新しいチャット',
     recentHistory: '最近の履歴',
+    renameChat: '名前を変更',
+    deleteChat: '削除',
+    deleteConfirm: '削除の確認',
+    deleteConfirmMessage: 'この会話を削除してもよろしいですか？',
+    untitledChat: '無題のチャット',
+    today: '今日',
+    yesterday: '昨日',
     typeMessage: 'メッセージを入力...',
     recording: '録音中...',
     send: '送信',

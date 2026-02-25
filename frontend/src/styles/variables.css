@@ -35,6 +35,7 @@
   /* Typography */
   --p5r-font-ui: "Segoe UI", "Microsoft YaHei", sans-serif;
   --p5r-font-dialog: "Segoe UI", "Microsoft YaHei", sans-serif;
+  --p5r-font-gemini: "Google Sans", "Roboto", "Segoe UI", "Microsoft YaHei", sans-serif;
 
   --p5r-font-size-ui: 14px;
   --p5r-font-size-dialog: 18px;

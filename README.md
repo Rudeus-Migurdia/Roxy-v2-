@@ -70,19 +70,33 @@ npm run dev
 
 
 ### 待实现
-- 分辨率和窗口化适配
 - 设置面板内部功能实现
 - 优化流式布局
-- 历史记录功能
-- live2d模型一键切换
 - 桌宠模式
 
+### v2.0.5 (2026-02-25)
+- 新增历史聊天记录功能（列出/切换/创建/删除/重命名会话）
+- 新增对话内容自动作为会话标题
+- 新增批量删除功能（长按800ms进入批量模式）
+- 侧边栏状态持久化（刷新后保持打开状态）
+- 侧边栏宽度调整为16vw
+- 更新字体为Gemini风格
+
 ### v2.0.4 (2026-02-24)
+- 新增live2d模型一键切换
 - 新增Live2D 位置控制：
 - **Bug修复**：
-  - 修复 Live2D canvas 尺寸限制导致的黑色边界问题（canvas 从 50%x90% 扩展至 100%x100%）
-  - 修复 positionX/positionY 使用 parseInt 导致的代码不一致问题（改用 parseFloat）
-  - 修复 Live2D settings 为 undefined 时的位置计算问题（添加默认值处理）
+  - 移除所有调试 console.log 语句和全局调试暴露
+  - 修复空消息验证逻辑（正确处理字符串 "undefined"/"null"）
+  - 添加 localStorage 类型验证（防止恶意/损坏数据导致崩溃）
+  - 添加 AudioContext 自动播放策略处理（首次用户交互时初始化）
+  - 修复音频重叠播放问题（AudioProcessor）
+  - 修复录音状态竞态条件（VoiceInputButton）
+  - 修复动画帧清理问题（AudioRecorder）
+  - 优化 useCallback 依赖项和 localStorage 写入频率
+  - 修复 Live2D canvas 尺寸限制导致的黑色边界问题
+  - 修复 positionX/positionY 代码不一致问题（parseInt → parseFloat）
+  - 修复 Live2D settings 为 undefined 时的位置计算问题
 
 ### v2.0.3 (2026-02-23)
 - 加入主题切换功能

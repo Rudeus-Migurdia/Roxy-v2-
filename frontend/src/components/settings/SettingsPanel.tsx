@@ -3,7 +3,7 @@
  */
 
 import { useState } from 'react';
-import { useSettings, type AppSettings } from '../../contexts/SettingsContext';
+import { useSettings } from '../../contexts/SettingsContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 
 interface SettingsPanelProps {
@@ -14,7 +14,7 @@ type TabType = 'general' | 'live2d' | 'audio' | 'advanced';
 
 export function SettingsPanel({ onClose }: SettingsPanelProps) {
   const { settings, updateLive2DSettings, updateAudioSettings, updateGeneralSettings, updateAdvancedSettings, resetSettings, exportSettings, importSettings } = useSettings();
-  const { language, setLanguage, t } = useLanguage();
+  const { setLanguage, t } = useLanguage();
   const [activeTab, setActiveTab] = useState<TabType>('general');
   const [exportData, setExportData] = useState<string>('');
   const [importData, setImportData] = useState<string>('');
@@ -137,6 +137,21 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
           {activeTab === 'live2d' && (
             <div className="settings-section">
               <h3 className="section-title">{t.live2d}</h3>
+
+              {/* Model Selection */}
+              <div className="setting-item">
+                <label className="setting-label">{t.model}</label>
+                <select
+                  className="setting-select"
+                  value={settings.live2d.model}
+                  onChange={(e) => updateLive2DSettings({ model: e.target.value })}
+                >
+                  <option value="xiaomai">{t.model_xiaomai}</option>
+                  <option value="miku">{t.model_miku}</option>
+                  <option value="22_high">{t.model_22_high}</option>
+                  <option value="33_high">{t.model_33_high}</option>
+                </select>
+              </div>
 
               {/* Model Scale */}
               <div className="setting-item">

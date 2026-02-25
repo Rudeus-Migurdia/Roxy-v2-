@@ -2,11 +2,21 @@
  * Sidebar Context
  * State management for galgame layout sidebars
  * Supports both open/close and collapsed/expanded states
+ * Persists state to localStorage
  */
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 
 export type SidebarState = 'expanded' | 'collapsed';
+
+// localStorage keys
+const SIDEBAR_STATE_KEY = 'nakari_sidebar_state';
+
+interface StoredSidebarState {
+  leftOpen: boolean;
+  leftCollapsed: boolean;
+  rightOpen: boolean;
+}
 
 interface SidebarContextValue {
   leftSidebarOpen: boolean;
@@ -27,15 +37,57 @@ interface SidebarProviderProps {
   defaultLeftCollapsed?: boolean;
 }
 
+// Load state from localStorage
+function loadStoredState(): StoredSidebarState | null {
+  try {
+    const stored = localStorage.getItem(SIDEBAR_STATE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch {
+    // Ignore errors
+  }
+  return null;
+}
+
+// Save state to localStorage
+function saveStoredState(state: StoredSidebarState) {
+  try {
+    localStorage.setItem(SIDEBAR_STATE_KEY, JSON.stringify(state));
+  } catch {
+    // Ignore errors
+  }
+}
+
 export function SidebarProvider({
   children,
   defaultLeftOpen = false,
   defaultRightOpen = false,
   defaultLeftCollapsed = false,
 }: SidebarProviderProps) {
-  const [leftSidebarOpen, setLeftSidebarOpen] = useState(defaultLeftOpen);
-  const [rightSidebarOpen, setRightSidebarOpen] = useState(defaultRightOpen);
-  const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState(defaultLeftCollapsed);
+  // Initialize from localStorage or use defaults
+  const [leftSidebarOpen, setLeftSidebarOpen] = useState(() => {
+    const stored = loadStoredState();
+    return stored?.leftOpen ?? defaultLeftOpen;
+  });
+  const [rightSidebarOpen, setRightSidebarOpen] = useState(() => {
+    const stored = loadStoredState();
+    return stored?.rightOpen ?? defaultRightOpen;
+  });
+  const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState(() => {
+    const stored = loadStoredState();
+    return stored?.leftCollapsed ?? defaultLeftCollapsed;
+  });
+
+  // Save to localStorage when state changes
+  useEffect(() => {
+    const state: StoredSidebarState = {
+      leftOpen: leftSidebarOpen,
+      leftCollapsed: leftSidebarCollapsed,
+      rightOpen: rightSidebarOpen,
+    };
+    saveStoredState(state);
+  }, [leftSidebarOpen, leftSidebarCollapsed, rightSidebarOpen]);
 
   const toggleLeftSidebar = useCallback(() => {
     setLeftSidebarOpen(prev => !prev);

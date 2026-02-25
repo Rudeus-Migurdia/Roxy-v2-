@@ -20,7 +20,7 @@
   width: 100%;
   height: 100%;
   pointer-events: none;
-  transform: translateX(2.1vw);
+  transform: translateX(3vw);
   z-index: var(--p5r-z-live2d);
 }
 
@@ -29,9 +29,9 @@
   transition: transform var(--p5r-duration-normal) var(--p5r-easing-sharp);
 }
 
-/* Shift right when sidebar is open and NOT collapsed (2.1vw + 5.2vw = 7.3vw) */
+/* Shift right when sidebar is open and NOT collapsed (3vw + 13vw = 16vw) */
 .galgame-main-view--shift-right {
-  transform: translateX(7.3vw);
+  transform: translateX(16vw);
 }
 
 /* Enable pointer events on children */
@@ -624,7 +624,7 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 9vw;
+  width: 16vw;
   background: var(--theme-surface);
   border-right: 1px solid var(--theme-border);
   backdrop-filter: blur(20px);
@@ -670,6 +670,9 @@
 
 .galgame-sidebar__text {
   white-space: nowrap;
+  font-family: var(--p5r-font-gemini);
+  font-size: 14px;
+  font-weight: 400;
 }
 
 /* ===== Sidebar Top (Menu Button) ===== */
@@ -744,6 +747,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--p5r-spacing-xs);
+  min-height: 0; /* Allow flex item to shrink properly */
 }
 
 /* Hide scrollbar */
@@ -756,11 +760,12 @@
 }
 
 .galgame-sidebar__history-title {
-  font: var(--p5r-font-ui);
-  font-size: 11px;
-  font-weight: 600;
+  font-family: var(--p5r-font-gemini);
+  font-size: 12px;
+  font-weight: 500;
   color: var(--theme-text-secondary);
-  text-transform: uppercase;
+  text-transform: none;
+  letter-spacing: 0;
   padding: var(--p5r-spacing-sm) var(--p5r-spacing-md);
 }
 
@@ -798,6 +803,8 @@
   display: flex;
   flex-direction: column;
   gap: var(--p5r-spacing-xs);
+  margin-top: auto; /* Push to bottom when history is hidden */
+  flex-shrink: 0; /* Don't shrink */
 }
 
 .galgame-sidebar__bottom-item {
@@ -1728,4 +1735,143 @@
     opacity: 1;
     transform: translateX(-50%) translateY(0);
   }
+}
+
+/* ===== Chat History Item Extensions ===== */
+.galgame-sidebar__history-item--active {
+  background-color: var(--theme-input-bg);
+}
+
+.galgame-sidebar__history-time {
+  font-family: var(--p5r-font-gemini);
+  font-size: 11px;
+  color: var(--theme-text-secondary);
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.galgame-sidebar__history-delete {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: var(--p5r-radius-sm);
+  color: var(--theme-text-secondary);
+  cursor: pointer;
+  opacity: 0;
+  transition: all var(--p5r-duration-fast) ease;
+  margin-left: var(--p5r-spacing-xs);
+}
+
+.galgame-sidebar__history-item:hover .galgame-sidebar__history-delete {
+  opacity: 0.7;
+}
+
+.galgame-sidebar__history-delete:hover {
+  opacity: 1;
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.galgame-sidebar__edit-input {
+  flex: 1;
+  padding: var(--p5r-spacing-xs) var(--p5r-spacing-sm);
+  background: var(--theme-input-bg);
+  border: 1px solid var(--p5r-orange);
+  border-radius: var(--p5r-radius-sm);
+  color: var(--theme-text);
+  font: var(--p5r-font-ui);
+  font-size: 14px;
+  outline: none;
+}
+
+.galgame-sidebar__edit-input:focus {
+  border-color: var(--p5r-orange);
+  box-shadow: 0 0 0 2px rgba(230, 126, 34, 0.2);
+}
+
+/* ===== Batch Deletion Mode ===== */
+.galgame-sidebar__batch-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--p5r-spacing-sm);
+  margin-left: auto;
+}
+
+.galgame-sidebar__batch-count {
+  font: var(--p5r-font-ui);
+  font-size: 11px;
+  color: var(--p5r-orange);
+}
+
+.galgame-sidebar__batch-cancel,
+.galgame-sidebar__batch-delete {
+  font: var(--p5r-font-ui);
+  font-size: 11px;
+  padding: 2px 8px;
+  border: none;
+  border-radius: var(--p5r-radius-sm);
+  cursor: pointer;
+  transition: all var(--p5r-duration-fast) ease;
+}
+
+.galgame-sidebar__batch-cancel {
+  background: var(--theme-input-bg);
+  color: var(--theme-text);
+}
+
+.galgame-sidebar__batch-cancel:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.galgame-sidebar__batch-delete {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.galgame-sidebar__batch-delete:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.3);
+}
+
+.galgame-sidebar__batch-delete:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* History item in batch mode */
+.galgame-sidebar__history-item--batch-mode {
+  cursor: pointer;
+  user-select: none;
+}
+
+.galgame-sidebar__history-item--batch-mode:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.galgame-sidebar__history-item--selected {
+  background-color: rgba(230, 126, 34, 0.15) !important;
+  border-color: var(--p5r-orange);
+}
+
+/* Checkbox for batch selection */
+.galgame-sidebar__checkbox {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--theme-text-secondary);
+  border-radius: 4px;
+  margin-right: var(--p5r-spacing-sm);
+  flex-shrink: 0;
+  transition: all var(--p5r-duration-fast) ease;
+}
+
+.galgame-sidebar__history-item--selected .galgame-sidebar__checkbox {
+  background: var(--p5r-orange);
+  border-color: var(--p5r-orange);
+  color: white;
 }

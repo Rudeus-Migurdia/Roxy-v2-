@@ -57,6 +57,12 @@ async def run() -> None:
     await journal.connect(config.journal_db_path)
     await journal.start_session()
 
+    # Inject journal into API routes (if enabled later)
+    if config.api_enabled:
+        # Import routes here and inject journal
+        from nakari.api import routes as api_routes
+        api_routes._journal_store = journal
+
     # Timer (SQLite persistent timers)
     timer_store = TimerStore()
     await timer_store.connect(config.timer_db_path)
@@ -137,14 +143,14 @@ async def run() -> None:
         tts_player = TTSPlayer(tts_backend)
 
         # Create WebSocket input handler
-        ws_input = WebSocketInput(mailbox, config)
+        ws_input = WebSocketInput(mailbox, config, journal)
 
         # Set ws_input in api_app module so websocket_endpoint can use it
         api_app.ws_input = ws_input
 
     # Register all tools
     register_mailbox_tools(registry, mailbox, loop_state, config)
-    register_reply_tool(registry, cli.print_reply, tts_player, multi_output_handler)
+    register_reply_tool(registry, cli.print_reply, tts_player, multi_output_handler, state_emitter)
     register_memory_tools(registry, memory, llm)
     register_context_tools(registry, context, llm)
     register_asr_tools(registry, config)

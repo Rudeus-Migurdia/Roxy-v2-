@@ -79,7 +79,7 @@ def create_app() -> FastAPI:
         CORSMiddleware,
         allow_origins=allowed_origins,
         allow_credentials=True,
-        allow_methods=["GET", "POST", "OPTIONS"],  # Restrict to needed methods
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Restrict to needed methods
         allow_headers=["Content-Type", "Authorization", "Accept"],  # Restrict headers
         expose_headers=["Content-Type", "Content-Length"],
         max_age=600,  # Cache preflight requests for 10 minutes

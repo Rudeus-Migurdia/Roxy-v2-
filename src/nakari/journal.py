@@ -13,7 +13,8 @@ _SCHEMA = """\
 CREATE TABLE IF NOT EXISTS sessions (
     id          TEXT PRIMARY KEY,
     started_at  REAL NOT NULL,
-    ended_at    REAL
+    ended_at    REAL,
+    title       TEXT
 );
 
 CREATE TABLE IF NOT EXISTS messages (
@@ -30,6 +31,11 @@ CREATE TABLE IF NOT EXISTS messages (
 CREATE INDEX IF NOT EXISTS idx_messages_session ON messages(session_id, id);
 CREATE INDEX IF NOT EXISTS idx_messages_role ON messages(role);
 CREATE INDEX IF NOT EXISTS idx_messages_event ON messages(event_id);
+"""
+
+# Migration for adding title column to existing databases
+_MIGRATION_ADD_TITLE = """\
+ALTER TABLE sessions ADD COLUMN title TEXT;
 """
 
 
@@ -50,6 +56,13 @@ class JournalStore:
         self._db.row_factory = aiosqlite.Row
         await self._db.executescript(_SCHEMA)
         await self._db.commit()
+        # Migration: add title column for existing databases
+        try:
+            await self._db.execute(_MIGRATION_ADD_TITLE)
+            await self._db.commit()
+        except aiosqlite.OperationalError:
+            # Column already exists, ignore error
+            pass
         self._log.info("journal_connected", path=str(path))
 
     async def close(self) -> None:
@@ -58,6 +71,22 @@ class JournalStore:
         if self._db:
             await self._db.close()
             self._db = None
+
+    async def switch_session(self, session_id: str) -> None:
+        """Switch to an existing session without creating a new one."""
+        # Verify session exists
+        cursor = await self._db.execute(
+            "SELECT id FROM sessions WHERE id = ?",
+            (session_id,),
+        )
+        row = await cursor.fetchone()
+        if not row:
+            raise ValueError(f"Session {session_id} not found")
+        # End current session if any
+        if self._session_id:
+            await self.end_session()
+        self._session_id = session_id
+        self._log.info("session_switched", session_id=session_id)
 
     async def start_session(self) -> str:
         assert self._db is not None
@@ -114,13 +143,83 @@ class JournalStore:
     ) -> list[dict[str, Any]]:
         assert self._db is not None
         cursor = await self._db.execute(
-            "SELECT s.id, s.started_at, s.ended_at, "
+            "SELECT s.id, s.started_at, s.ended_at, s.title, "
             "  (SELECT COUNT(*) FROM messages m WHERE m.session_id = s.id) AS message_count "
             "FROM sessions s ORDER BY s.started_at DESC LIMIT ? OFFSET ?",
             (limit, offset),
         )
         rows = await cursor.fetchall()
-        return [dict(r) for r in rows]
+        results = []
+        for r in rows:
+            row = dict(r)
+            # Generate title if not set
+            if not row.get("title"):
+                row["title"] = await self._generate_session_title_fallback(row["id"])
+            results.append(row)
+        return results
+
+    async def _generate_session_title_fallback(self, session_id: str) -> str:
+        """Generate title from first user message (fallback only)."""
+        cursor = await self._db.execute(
+            """SELECT content FROM messages
+               WHERE session_id = ? AND role = 'user'
+               ORDER BY id ASC LIMIT 1""",
+            (session_id,),
+        )
+        row = await cursor.fetchone()
+        if row and row["content"]:
+            content = row["content"]
+            # Clean up the content: remove extra whitespace and newlines
+            content = content.strip()
+            content = ' '.join(content.split())
+            # Truncate to reasonable length (about 30-40 characters)
+            if len(content) > 40:
+                # Try to end at a word boundary
+                truncated = content[:37]
+                last_space = truncated.rfind(' ')
+                if last_space > 20:
+                    truncated = truncated[:last_space]
+                return truncated + "..."
+            return content
+        return f"新对话"
+
+    async def set_session_title(self, session_id: str, title: str) -> None:
+        """Set or update session title."""
+        assert self._db is not None
+        await self._db.execute(
+            "UPDATE sessions SET title = ? WHERE id = ?",
+            (title, session_id),
+        )
+        await self._db.commit()
+        self._log.info("session_title_set", session_id=session_id, title=title)
+
+    async def get_session_title(self, session_id: str) -> str | None:
+        """Get session title from DB or None if not set."""
+        assert self._db is not None
+        cursor = await self._db.execute(
+            "SELECT title FROM sessions WHERE id = ?",
+            (session_id,),
+        )
+        row = await cursor.fetchone()
+        if row and row["title"]:
+            return row["title"]
+        return None
+
+    async def delete_session(self, session_id: str) -> None:
+        """Delete a session and all its messages."""
+        assert self._db is not None
+        # Delete messages first (foreign key)
+        await self._db.execute(
+            "DELETE FROM messages WHERE session_id = ?",
+            (session_id,),
+        )
+        # Delete session
+        await self._db.execute(
+            "DELETE FROM sessions WHERE id = ?",
+            (session_id,),
+        )
+        await self._db.commit()
+        self._log.info("session_deleted", session_id=session_id)
 
     async def read_session(
         self, session_id: str, limit: int = 50, offset: int = 0

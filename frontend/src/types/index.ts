@@ -149,3 +149,29 @@ export interface TransitionTrigger {
   from?: string;
   to: string;
 }
+
+// ===== Chat History Types =====
+
+// Chat session
+export interface ChatSession {
+  id: string;
+  title: string;
+  started_at: number;
+  ended_at: number | null;
+  message_count: number;
+}
+
+// Session-related WebSocket message types
+export type SessionWSMessageType =
+  | 'session_created'
+  | 'session_switched';
+
+export interface SessionCreatedData {
+  session_id: string;
+  started_at: number;
+}
+
+export interface SessionSwitchedData {
+  session_id: string;
+  messages: DialogState[];
+}

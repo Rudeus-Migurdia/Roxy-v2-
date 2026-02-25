@@ -8,6 +8,7 @@ export class AudioProcessor {
   private currentSource: AudioBufferSourceNode | null = null;
   private isPlaying = false;
   private animationFrameId: number | null = null;
+  private stopPending = false; // Track if stop is pending to prevent double-stop
 
   // Lip-sync parameters
   private mouthParam = 0; // 0.0 - 1.0
@@ -63,11 +64,19 @@ export class AudioProcessor {
   async play(base64Audio: string): Promise<void> {
     await this.init();
 
-    // Stop current audio if playing
+    // Stop current audio if playing (wait for stop to complete)
     this.stop();
+
+    // Reset stop pending flag for new playback
+    this.stopPending = false;
 
     try {
       const audioBuffer = await this.decodeAudio(base64Audio);
+
+      // Don't play if stop was called while decoding
+      if (this.stopPending) {
+        return;
+      }
 
       // Create source and connect to analyser
       const source = this.audioContext!.createBufferSource();
@@ -79,18 +88,22 @@ export class AudioProcessor {
       this.isPlaying = true;
 
       // Start playback
-      source.start();
+      source.start(0);
 
       // Start lip-sync animation
       this.updateLipSync();
 
-      // Cleanup when playback ends
+      // Cleanup when playback ends naturally (not via stop())
       source.onended = () => {
-        this.stop();
+        if (this.isPlaying) {
+          // Only call stop if we're still marked as playing
+          // (otherwise stop() was already called externally)
+          this.cleanupAfterPlayback();
+        }
       };
     } catch (error) {
       console.error('Error playing audio:', error);
-      this.stop();
+      this.cleanupAfterPlayback();
     }
   }
 
@@ -133,25 +146,51 @@ export class AudioProcessor {
    * Stop current audio playback
    */
   stop(): void {
+    this.stopPending = true;
+    this.isPlaying = false;
+
     // Cancel any pending animation frame first
     if (this.animationFrameId !== null) {
       cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
     }
 
-    // Stop audio source
+    // Stop and cleanup audio source
     if (this.currentSource) {
       try {
-        this.currentSource.stop();
-        // Disconnect the source to prevent memory leaks
+        // Remove onended listener to prevent double cleanup
+        this.currentSource.onended = null;
+        // Stop the source
+        this.currentSource.stop(0);
+        // Disconnect to prevent memory leaks
         this.currentSource.disconnect();
       } catch {
-        // Source already stopped or disconnected
+        // Source already stopped or not yet started
       }
       this.currentSource = null;
     }
 
+    // Reset mouth parameter
+    this.mouthParam = 0;
+    this.onMouthParamChange?.(0);
+  }
+
+  /**
+   * Cleanup after natural playback end (not manual stop)
+   */
+  private cleanupAfterPlayback(): void {
     this.isPlaying = false;
+
+    // Cancel animation frame
+    if (this.animationFrameId !== null) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+    }
+
+    // Clear source reference (but don't stop/disconnect as it's already done)
+    this.currentSource = null;
+
+    // Reset mouth parameter
     this.mouthParam = 0;
     this.onMouthParamChange?.(0);
   }

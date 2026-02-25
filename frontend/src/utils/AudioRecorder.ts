@@ -199,7 +199,10 @@ export class AudioRecorder {
     const dataArray = new Uint8Array(this.analyser.frequencyBinCount);
 
     const updateLevel = () => {
+      // Check if still recording and analyser exists
       if (!this.isRecording || !this.analyser) {
+        // Clear the animation frame ID if we're stopping
+        this.animationFrameId = null;
         return;
       }
 
@@ -218,7 +221,10 @@ export class AudioRecorder {
       // 更新状态
       this.notifyStateChange();
 
-      this.animationFrameId = requestAnimationFrame(updateLevel);
+      // Only request next frame if still recording
+      if (this.isRecording) {
+        this.animationFrameId = requestAnimationFrame(updateLevel);
+      }
     };
 
     updateLevel();

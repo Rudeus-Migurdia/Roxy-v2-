@@ -34,6 +34,7 @@ import { SettingsPanel } from './components/settings';
 import { SidebarProvider, useSidebarContext } from './contexts/SidebarContext';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import { LanguageProvider } from './contexts/LanguageContext';
+import { ChatHistoryProvider, useChatHistory } from './contexts/ChatHistoryContext';
 
 // Error Boundary
 class ErrorBoundary extends Component<{children: ReactNode}, {hasError: boolean, error: any}> {
@@ -77,9 +78,13 @@ function App() {
   const [live2dReady, setLive2dReady] = useState(false);
   const [messageHistory, setMessageHistory] = useState<DialogState[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [audioContextReady, setAudioContextReady] = useState(false);
 
   // Sidebar state
   const { leftSidebarOpen, leftSidebarCollapsed } = useSidebarContext();
+
+  // Chat history
+  const { state: chatState, loadSession, loadSessions } = useChatHistory();
 
   // Settings
   const { settings } = useSettings();
@@ -93,6 +98,8 @@ function App() {
   const currentStateRef = useRef<Live2DState>(currentState);
   const currentEmotionRef = useRef<string>(currentEmotion);
   const triggerRef = useRef<any>(null);
+  const audioContextReadyRef = useRef<boolean>(false);
+  const enableAudioRef = useRef<boolean>(config.enableAudio);
 
   // Update refs when state changes
   useEffect(() => {
@@ -102,6 +109,40 @@ function App() {
   useEffect(() => {
     currentEmotionRef.current = currentEmotion;
   }, [currentEmotion]);
+
+  // Update enableAudio ref when config changes
+  useEffect(() => {
+    enableAudioRef.current = config.enableAudio;
+  }, [config.enableAudio]);
+
+  // Initialize AudioContext on first user interaction (autoplay policy)
+  useEffect(() => {
+    if (audioContextReady) return; // Already initialized
+
+    const handleUserInteraction = async () => {
+      if (!audioContextReady && audioProcessorRef.current) {
+        try {
+          await audioProcessorRef.current.init();
+          setAudioContextReady(true);
+          audioContextReadyRef.current = true;
+        } catch (e) {
+          console.warn('[App] Failed to initialize AudioContext:', e);
+        }
+      }
+    };
+
+    // Listen for user interaction events
+    const events = ['click', 'keydown', 'touchstart'];
+    events.forEach(event => {
+      window.addEventListener(event, handleUserInteraction, { once: true });
+    });
+
+    return () => {
+      events.forEach(event => {
+        window.removeEventListener(event, handleUserInteraction);
+      });
+    };
+  }, [audioContextReady]);
 
   // Transition hook
   const { transition, trigger } = useTransition();
@@ -133,10 +174,11 @@ function App() {
 
       case 'text': {
         const textData = payload as { text: string; isUser: boolean };
-        // Only update if text is valid
-        if (textData.text && textData.text !== 'undefined' && textData.text !== 'null') {
+        // Only update if text is valid (non-empty after trim, not literal 'undefined'/'null')
+        const text = textData.text?.trim();
+        if (text && text !== 'undefined' && text !== 'null' && text.length > 0) {
           const newDialog: DialogState = {
-            text: textData.text,
+            text: text,
             speaker: textData.isUser ? 'You' : 'Roxy',
             isUser: textData.isUser,
             timestamp: Date.now(),
@@ -153,8 +195,8 @@ function App() {
         break;
 
       case 'audio':
-        // Play audio if enabled
-        if (config.enableAudio && audioProcessorRef.current) {
+        // Play audio if enabled and AudioContext is ready
+        if (enableAudioRef.current && audioProcessorRef.current && audioContextReadyRef.current) {
           const audioData = payload as { audio: string; format: string; sampleRate: number };
           audioProcessorRef.current.play(audioData.audio)
             .catch(e => console.error('[App] Audio playback failed:', e));
@@ -163,6 +205,7 @@ function App() {
 
       case 'emotion': {
         const newEmotion = (payload as { emotion: string }).emotion;
+        console.log('[App] Emotion received:', newEmotion);
         // Trigger transition on emotion change (using ref to get latest emotion)
         const prevEmotion = currentEmotionRef.current;
         if (newEmotion !== prevEmotion && newEmotion !== 'neutral' && triggerRef.current) {
@@ -171,6 +214,7 @@ function App() {
         setCurrentEmotion(newEmotion);
         // Apply emotion to Live2D model if available
         if (modelRef.current) {
+          console.log('[App] Applying emotion to model:', newEmotion);
           import('./live2d/Live2DRenderer').then(({ setModelEmotion }) => {
             setModelEmotion(modelRef.current, newEmotion as any);
           });
@@ -198,10 +242,10 @@ function App() {
         }
         break;
     }
-  }, [config.enableAudio]); // Minimal dependencies - uses refs for state access
+  }, []); // No dependencies - uses refs for all dynamic values
 
   // Stable state change handler
-  const handleStateChange = useCallback((state: string) => {
+  const handleStateChange = useCallback((_state: string) => {
     // State change handling
   }, []);
 
@@ -218,6 +262,24 @@ function App() {
     // Auto-connect on mount (only once)
     connect();
   }, [connect]); // Added connect dependency
+
+  // Load sessions on mount
+  useEffect(() => {
+    loadSessions();
+  }, [loadSessions]);
+
+  // Restore current session messages on mount and when session changes
+  useEffect(() => {
+    if (chatState.currentSessionId) {
+      loadSession(chatState.currentSessionId).then(messages => {
+        setMessageHistory(messages);
+        // Set current dialog to last message if available
+        if (messages.length > 0) {
+          setCurrentDialog(messages[messages.length - 1]);
+        }
+      });
+    }
+  }, [chatState.currentSessionId, loadSession]);
 
   // Handle user input
   const handleSendMessage = useCallback((text: string) => {
@@ -348,11 +410,13 @@ function ThemeAwareApp() {
 
   return (
     <div data-theme={settings.general.theme}>
-      <LanguageProvider>
-        <SidebarProvider defaultLeftOpen={true} defaultRightOpen={false} defaultLeftCollapsed={true}>
-          <App />
-        </SidebarProvider>
-      </LanguageProvider>
+      <ChatHistoryProvider>
+        <LanguageProvider>
+          <SidebarProvider defaultLeftOpen={true} defaultRightOpen={false} defaultLeftCollapsed={true}>
+            <App />
+          </SidebarProvider>
+        </LanguageProvider>
+      </ChatHistoryProvider>
     </div>
   );
 }
