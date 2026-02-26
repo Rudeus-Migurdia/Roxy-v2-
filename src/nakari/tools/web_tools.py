@@ -57,7 +57,7 @@ def register_web_tools(registry: ToolRegistry, config: Config) -> None:
                     "description": "Maximum number of results to return (1-10, default 5)",
                 },
             },
-            "required": ["query", "max_results"],
+            "required": ["query"],
             "additionalProperties": False,
         },
         handler=web_search,

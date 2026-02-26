@@ -104,7 +104,7 @@ def register_asr_tools(registry: ToolRegistry, config: Config) -> None:
                     "description": "Language code (e.g. 'zh', 'en'). Null for auto-detect.",
                 },
             },
-            "required": ["audio_uri", "language"],
+            "required": ["audio_uri"],
             "additionalProperties": False,
         },
         handler=transcribe,

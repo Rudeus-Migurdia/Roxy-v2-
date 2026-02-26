@@ -29,7 +29,7 @@ class TTSBackend(Protocol):
 
 class EdgeTTSBackend:
     def __init__(self, voice: str, speed: float) -> None:
-        self._voice = voice or "zh-CN-XiaoxiaoNeural"
+        self._voice = voice if voice is not None else "zh-CN-XiaoxiaoNeural"
         self._speed = speed
 
     async def synthesize_stream(self, text: str) -> AsyncIterator[bytes]:

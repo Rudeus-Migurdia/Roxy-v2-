@@ -5,6 +5,7 @@ import os
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 import structlog
 
@@ -63,7 +64,7 @@ class CLI:
             flush=True,
         )
 
-        frames: list = []
+        frames: list[Any] = []
         stream = sd.InputStream(
             samplerate=sample_rate,
             channels=channels,
