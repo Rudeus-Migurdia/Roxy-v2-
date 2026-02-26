@@ -81,6 +81,9 @@ npm run dev
   - 修复 `asyncio.get_event_loop()` 不安全调用（改用 `time.time()`）
   - 修复 `switch_session` 可能导致未关闭会话的问题
   - 修复前端 HTTPS/WSS 协议转换 bug
+  - 修复 JSON Schema required 参数问题（mailbox/asr/web/timer 工具）
+  - 修复 EdgeTTSBackend voice 默认值判断逻辑
+  - 修复 cli.py frames 类型注解缺失问题
 
 
 ### v2.0.5 (2026-02-25)
