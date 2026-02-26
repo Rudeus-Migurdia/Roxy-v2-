@@ -17,7 +17,8 @@ const getHttpApiUrl = (): string => {
   if (wsUrl) {
     // Convert ws:// to http:// and wss:// to https://
     const baseUrl = wsUrl.replace(/^wss?:\/\//, '').replace(/\/api\/ws$/, '');
-    return `http://${baseUrl}/api`;
+    const protocol = wsUrl.startsWith('wss://') ? 'https' : 'http';
+    return `${protocol}://${baseUrl}/api`;
   }
   const host = import.meta.env.VITE_API_HOST || 'localhost';
   const port = import.meta.env.VITE_API_PORT || '8002';

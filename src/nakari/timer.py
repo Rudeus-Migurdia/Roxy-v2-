@@ -175,6 +175,9 @@ async def run_timer_loop(
     log = structlog.get_logger("timer_loop")
     log.info("timer_loop_started", check_interval=check_interval)
 
+    consecutive_errors = 0
+    max_consecutive_errors = 5
+
     while True:
         try:
             now = time.time()
@@ -199,7 +202,16 @@ async def run_timer_loop(
                     name=timer["name"],
                     timer_type=timer["timer_type"],
                 )
+            # Reset error counter on success
+            consecutive_errors = 0
         except Exception:
-            log.error("timer_loop_error", exc_info=True)
+            consecutive_errors += 1
+            log.error("timer_loop_error", consecutive_errors=consecutive_errors, exc_info=True)
+            # Use exponential backoff for repeated errors to avoid CPU spinning
+            if consecutive_errors >= max_consecutive_errors:
+                log.warning("timer_loop_too_many_errors", sleep_seconds=60)
+                await asyncio.sleep(60)  # Wait longer if errors persist
+                continue
 
+        # Standard sleep interval
         await asyncio.sleep(check_interval)

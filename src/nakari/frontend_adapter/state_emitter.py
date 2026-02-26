@@ -6,7 +6,7 @@ allowing the frontend to synchronize Live2D animations and expressions.
 
 from __future__ import annotations
 
-import asyncio
+import time
 from enum import Enum
 
 import structlog
@@ -77,7 +77,7 @@ class StateEmitter:
         message = {
             "version": "1.0",
             "type": "state",
-            "timestamp": asyncio.get_event_loop().time(),
+            "timestamp": time.time(),
             "payload": {
                 "state": state.value,
                 "event_id": event_id,
@@ -113,7 +113,7 @@ class StateEmitter:
         message = {
             "version": "1.0",
             "type": "action",
-            "timestamp": asyncio.get_event_loop().time(),
+            "timestamp": time.time(),
             "payload": {
                 "tool": tool_name,
                 "event_id": event_id,
@@ -138,7 +138,7 @@ class StateEmitter:
         message = {
             "version": "1.0",
             "type": "emotion",
-            "timestamp": asyncio.get_event_loop().time(),
+            "timestamp": time.time(),
             "payload": {
                 "emotion": emotion.value,
                 "intensity": intensity,
@@ -162,7 +162,7 @@ class StateEmitter:
         message = {
             "version": "1.0",
             "type": "motion",
-            "timestamp": asyncio.get_event_loop().time(),
+            "timestamp": time.time(),
             "payload": {
                 "motion": motion.value,
                 "group": group,
@@ -183,7 +183,7 @@ class StateEmitter:
         message = {
             "version": "1.0",
             "type": "error",
-            "timestamp": asyncio.get_event_loop().time(),
+            "timestamp": time.time(),
             "payload": {
                 "error": error,
                 "details": details,

@@ -82,9 +82,24 @@ class JournalStore:
         row = await cursor.fetchone()
         if not row:
             raise ValueError(f"Session {session_id} not found")
-        # End current session if any
-        if self._session_id:
-            await self.end_session()
+
+        # End current session if any, with error handling
+        old_session_id = self._session_id
+        if old_session_id:
+            try:
+                await self.end_session()
+            except Exception as e:
+                # Log the error but don't prevent the switch
+                # The old session may be in an inconsistent state, but we can still switch
+                self._log.warning(
+                    "session_end_failed_during_switch",
+                    old_session_id=old_session_id,
+                    new_session_id=session_id,
+                    error=str(e),
+                )
+                # Force clear the session ID even if end_session failed
+                self._session_id = None
+
         self._session_id = session_id
         self._log.info("session_switched", session_id=session_id)
 

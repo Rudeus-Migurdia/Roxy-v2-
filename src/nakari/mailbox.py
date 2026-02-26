@@ -52,12 +52,20 @@ class Mailbox:
         self._log.info("event_archived", event_id=event.id)
 
     async def wait_for_events(self) -> None:
-        """Block until there is at least one PENDING event."""
-        # Clear the event before checking to avoid race condition
-        self._notify.clear()
+        """Block until there is at least one PENDING event.
+
+        Uses a double-checked pattern to avoid race condition:
+        1. Check for pending events without clearing
+        2. If none, clear the event right before waiting
+        3. Check again after clearing in case an event arrived
+        """
         while not any(e.status == EventStatus.PENDING for e in self._events.values()):
-            await self._notify.wait()
+            # Clear the event right before waiting to avoid missing signals
             self._notify.clear()
+            # Double-check after clearing in case an event arrived between checks
+            if any(e.status == EventStatus.PENDING for e in self._events.values()):
+                break
+            await self._notify.wait()
 
     def qsize(self) -> int:
         return len(self._events)
