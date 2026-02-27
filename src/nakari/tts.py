@@ -180,11 +180,21 @@ class TTSPlayer:
         except asyncio.CancelledError:
             if proc and proc.returncode is None:
                 proc.kill()
+                # Wait for the process to terminate after killing
+                try:
+                    await asyncio.wait_for(proc.wait(), timeout=2.0)
+                except asyncio.TimeoutError:
+                    _log.warning("tts_process_timeout", pid=proc.pid)
             raise
         except Exception as e:
             _log.warning("tts_playback_error", error=str(e))
             if proc and proc.returncode is None:
                 proc.kill()
+                # Wait for the process to terminate after killing
+                try:
+                    await asyncio.wait_for(proc.wait(), timeout=2.0)
+                except asyncio.TimeoutError:
+                    _log.warning("tts_process_timeout_on_error", pid=proc.pid)
 
     def speak_background(self, text: str) -> None:
         """Fire-and-forget: cancel current playback, start new."""

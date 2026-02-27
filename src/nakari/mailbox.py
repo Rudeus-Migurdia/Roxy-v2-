@@ -59,12 +59,19 @@ class Mailbox:
         2. If none, clear the event right before waiting
         3. Check again after clearing in case an event arrived
         """
-        while not any(e.status == EventStatus.PENDING for e in self._events.values()):
-            # Clear the event right before waiting to avoid missing signals
-            self._notify.clear()
-            # Double-check after clearing in case an event arrived between checks
+        while True:
+            # First check: do we have pending events?
             if any(e.status == EventStatus.PENDING for e in self._events.values()):
                 break
+
+            # No pending events: clear and wait
+            self._notify.clear()
+
+            # Double-check after clearing in case an event arrived between the first check and clear
+            if any(e.status == EventStatus.PENDING for e in self._events.values()):
+                break
+
+            # Wait for signal (an event was added)
             await self._notify.wait()
 
     def qsize(self) -> int:

@@ -59,6 +59,19 @@ class ReactLoop:
                     tools=self._registry.get_openai_schemas(),
                 )
 
+                # Validate response has choices
+                if not response.choices:
+                    self._log.error("llm_empty_response", model=self._llm._model)
+                    error_msg = "[System Error] LLM returned empty response. Retrying..."
+                    self._context.add_user_message(error_msg)
+                    await self._journal.log_message(
+                        role="user",
+                        content=error_msg,
+                        event_id=self._state.current_event.id if self._state.current_event else None,
+                    )
+                    await asyncio.sleep(1)
+                    continue
+
                 choice = response.choices[0]
                 message = choice.message
 

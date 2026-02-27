@@ -3,8 +3,12 @@ from __future__ import annotations
 import json
 from datetime import datetime
 
+import structlog
+
 from nakari.timer import TimerStore
 from nakari.tool_registry import ToolRegistry
+
+_log = structlog.get_logger("timer_tools")
 
 
 def register_timer_tools(
@@ -21,7 +25,15 @@ def register_timer_tools(
     ) -> str:
         fire_at_epoch: float | None = None
         if fire_at is not None:
-            fire_at_epoch = datetime.fromisoformat(fire_at).timestamp()
+            try:
+                fire_at_epoch = datetime.fromisoformat(fire_at).timestamp()
+            except ValueError as e:
+                _log.error("invalid_fire_at_format", fire_at=fire_at, error=str(e))
+                return json.dumps({
+                    "error": f"Invalid fire_at datetime format: {fire_at}. "
+                              f"Expected ISO 8601 format (e.g., '2026-02-17T09:00:00'). "
+                              f"Details: {e}"
+                }, ensure_ascii=False)
 
         timer = await timer_store.create_timer(
             name=name,

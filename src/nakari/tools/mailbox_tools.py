@@ -177,6 +177,8 @@ def register_mailbox_tools(
         if metadata is not None:
             parsed = json.loads(metadata)
             event.metadata.update(parsed)
+            # Include the updated metadata in fields so it gets persisted
+            fields["metadata"] = event.metadata
 
         if fields:
             mailbox.update(event_id, **fields)

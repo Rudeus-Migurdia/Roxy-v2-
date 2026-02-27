@@ -83,7 +83,11 @@ class ContextManager:
             # If we removed an assistant message with tool_calls,
             # also remove orphaned tool results
             if removed.get("role") == "assistant" and removed.get("tool_calls"):
-                call_ids = {tc["id"] for tc in removed["tool_calls"]}
+                # Use .get() to safely extract IDs, filtering out any missing "id" keys
+                call_ids = {
+                    tc.get("id") for tc in removed["tool_calls"]
+                    if tc.get("id") is not None
+                }
                 # Filter out orphaned tool results
                 # Keep system message (index 0) and all messages not referencing removed tool calls
                 self._messages = [

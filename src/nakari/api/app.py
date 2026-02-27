@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import uuid
 from contextlib import asynccontextmanager
 from typing import AsyncIterator, Awaitable, Callable
 
@@ -118,8 +119,8 @@ def create_app() -> FastAPI:
             await websocket.close(code=1011, reason="Server not initialized")
             return
 
-        # Generate client ID if not provided
-        client_id = websocket.query_params.get("client_id", f"client_{asyncio.get_event_loop().time():.0f}")
+        # Generate client ID if not provided (use UUID for uniqueness)
+        client_id = websocket.query_params.get("client_id", f"client_{uuid.uuid4().hex[:12]}")
 
         await ws_manager.connect(client_id, websocket)
 

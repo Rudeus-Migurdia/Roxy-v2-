@@ -15,6 +15,39 @@ from fastapi import WebSocket
 _log = structlog.get_logger("websocket_manager")
 
 
+def _create_background_task(
+    coro: Awaitable[None],
+    callback_name: str,
+    logger: structlog.stdlib.BoundLogger,
+) -> asyncio.Task[None] | None:
+    """Create a background task with proper exception handling.
+
+    Args:
+        coro: The coroutine to execute
+        callback_name: Name of the callback for logging
+        logger: Logger instance
+
+    Returns:
+        The created task, or None if coro is None
+    """
+    if coro is None:
+        return None
+
+    async def _wrapper() -> None:
+        try:
+            await coro
+        except Exception as e:
+            logger.error(
+                "callback_exception",
+                callback=callback_name,
+                error=str(e),
+                exc_info=True,
+            )
+
+    task = asyncio.create_task(_wrapper())
+    return task
+
+
 class WebSocketManager:
     """WebSocket connection manager.
 
@@ -40,6 +73,7 @@ class WebSocketManager:
         self._on_last_client_disconnect = on_last_client_disconnect
         self._on_client_connect = on_client_connect
         self._log = _log
+        self._pending_callbacks: Set[asyncio.Task[None]] = set()
 
     async def connect(self, client_id: str, ws: WebSocket) -> None:
         """Accept and register a new WebSocket connection.
@@ -69,7 +103,14 @@ class WebSocketManager:
 
         # Trigger callback if this is a new connection
         if self._on_client_connect:
-            asyncio.create_task(self._on_client_connect())
+            task = _create_background_task(
+                self._on_client_connect(),
+                "on_client_connect",
+                self._log,
+            )
+            if task:
+                self._pending_callbacks.add(task)
+                task.add_done_callback(self._pending_callbacks.discard)
 
     def disconnect(self, client_id: str) -> None:
         """Disconnect a client.
@@ -91,7 +132,14 @@ class WebSocketManager:
         # Trigger callback if this was the last client
         if remaining == 0 and self._on_last_client_disconnect:
             self._log.info("last_client_disconnected", callback="on_last_client_disconnect")
-            asyncio.create_task(self._on_last_client_disconnect())
+            task = _create_background_task(
+                self._on_last_client_disconnect(),
+                "on_last_client_disconnect",
+                self._log,
+            )
+            if task:
+                self._pending_callbacks.add(task)
+                task.add_done_callback(self._pending_callbacks.discard)
 
     async def send(self, client_id: str, message: dict) -> bool:
         """Send a message to a specific client.
@@ -170,6 +218,15 @@ class WebSocketManager:
 
     async def close_all(self) -> None:
         """Close all WebSocket connections."""
+        # Cancel any pending callback tasks
+        for task in list(self._pending_callbacks):
+            if not task.done():
+                task.cancel()
+        # Wait a brief moment for tasks to clean up
+        if self._pending_callbacks:
+            await asyncio.gather(*self._pending_callbacks, return_exceptions=True)
+        self._pending_callbacks.clear()
+
         for ws in list(self._client_ids.keys()):
             try:
                 await ws.close()
