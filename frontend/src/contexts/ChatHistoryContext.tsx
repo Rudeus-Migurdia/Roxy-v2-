@@ -67,25 +67,8 @@ export function ChatHistoryProvider({ children }: ChatHistoryProviderProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Load current session ID from localStorage on mount
-  useEffect(() => {
-    const saved = localStorage.getItem(CURRENT_SESSION_KEY);
-    if (saved) {
-      setCurrentSessionId(saved);
-    }
-  }, []);
-
-  // Save current session ID to localStorage when it changes
-  useEffect(() => {
-    if (currentSessionId) {
-      localStorage.setItem(CURRENT_SESSION_KEY, currentSessionId);
-    } else {
-      localStorage.removeItem(CURRENT_SESSION_KEY);
-    }
-  }, [currentSessionId]);
-
   // Helper: fetch from API
-  const fetchApi = async (endpoint: string, options?: RequestInit) => {
+  const fetchApi = useCallback(async (endpoint: string, options?: RequestInit) => {
     const response = await fetch(`${API_BASE}${endpoint}`, {
       ...options,
       headers: {
@@ -97,7 +80,45 @@ export function ChatHistoryProvider({ children }: ChatHistoryProviderProps) {
       throw new Error(`API error: ${response.status} ${response.statusText}`);
     }
     return response.json();
-  };
+  }, []);
+
+  // Load current session ID from backend on mount
+  useEffect(() => {
+    const fetchCurrentSession = async () => {
+      try {
+        const data = await fetchApi('/sessions/current');
+        const backendSessionId = data.session_id;
+        if (backendSessionId) {
+          console.log('[ChatHistory] Backend session ID:', backendSessionId);
+          setCurrentSessionId(backendSessionId);
+        } else {
+          // Fallback to localStorage if backend has no session
+          const saved = localStorage.getItem(CURRENT_SESSION_KEY);
+          if (saved) {
+            console.log('[ChatHistory] Using saved session ID:', saved);
+            setCurrentSessionId(saved);
+          }
+        }
+      } catch (err) {
+        console.error('[ChatHistory] Failed to fetch current session:', err);
+        // Fallback to localStorage
+        const saved = localStorage.getItem(CURRENT_SESSION_KEY);
+        if (saved) {
+          setCurrentSessionId(saved);
+        }
+      }
+    };
+    fetchCurrentSession();
+  }, [fetchApi]);
+
+  // Save current session ID to localStorage when it changes
+  useEffect(() => {
+    if (currentSessionId) {
+      localStorage.setItem(CURRENT_SESSION_KEY, currentSessionId);
+    } else {
+      localStorage.removeItem(CURRENT_SESSION_KEY);
+    }
+  }, [currentSessionId]);
 
   // Load sessions list
   const loadSessions = useCallback(async () => {
@@ -136,17 +157,33 @@ export function ChatHistoryProvider({ children }: ChatHistoryProviderProps) {
     setError(null);
     try {
       const data = await fetchApi(`/sessions/${sessionId}`);
+      console.log('[ChatHistory] Raw API response:', data);
+      console.log('[ChatHistory] Raw messages array:', data.messages);
       // Convert backend messages to DialogState format
       const messages: DialogState[] = (data.messages || [])
-        .filter((m: { role: string; content: string | null }) =>
-          m.role === 'user' || m.role === 'assistant'
-        )
+        .filter((m: { role: string; content: string | null }) => {
+          // Only include user and assistant messages
+          if (m.role !== 'user' && m.role !== 'assistant') {
+            return false;
+          }
+          // Skip assistant messages with no content (pure tool calls)
+          // Check for null, undefined, empty string, or whitespace-only content
+          if (m.role === 'assistant') {
+            const hasContent = m.content && typeof m.content === 'string' && m.content.trim().length > 0;
+            if (!hasContent) {
+              console.log('[ChatHistory] Skipping assistant message with no content:', m);
+              return false;
+            }
+          }
+          return true;
+        })
         .map((m: { role: string; content: string | null; created_at: number }) => ({
           text: m.content || '',
           speaker: m.role === 'user' ? 'User' : 'Roxy',
           isUser: m.role === 'user',
           timestamp: Math.floor(m.created_at * 1000),
         }));
+      console.log('[ChatHistory] Filtered messages:', messages.length, messages);
       return messages;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load session');

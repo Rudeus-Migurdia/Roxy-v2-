@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import structlog
 from typing import TYPE_CHECKING, Awaitable, Callable
 
 from nakari.tool_registry import ToolRegistry
@@ -7,6 +8,7 @@ from nakari.tool_registry import ToolRegistry
 if TYPE_CHECKING:
     from nakari.frontend_adapter.state_emitter import StateEmitter
     from nakari.tts import TTSPlayer
+    from nakari.journal import JournalStore
 
 
 def register_reply_tool(
@@ -15,6 +17,7 @@ def register_reply_tool(
     tts_player: TTSPlayer | None = None,
     multi_output_handler = None,
     state_emitter: StateEmitter | None = None,
+    journal: JournalStore | None = None,
 ) -> None:
     """Register the reply tool.
 
@@ -27,6 +30,17 @@ def register_reply_tool(
         state_emitter: Optional StateEmitter for Live2D emotion/motion control
     """
     async def reply(message: str, speak: bool = False) -> str:
+        # Log the assistant reply to journal for chat history
+        _log = structlog.get_logger("reply_tool")
+        _log.info("reply_called", message_length=len(message), journal_present=journal is not None)
+
+        if journal is not None:
+            _log.info("logging_assistant_reply", content_length=len(message), content_preview=message[:100])
+            await journal.log_message(role="assistant", content=message)
+            _log.info("assistant_reply_logged")
+        else:
+            _log.warning("journal_is_none_skipping_log")
+
         # Use multi-output handler if available, otherwise use direct callback
         if multi_output_handler is not None:
             await multi_output_handler.emit(message)
@@ -37,7 +51,6 @@ def register_reply_tool(
         if state_emitter is not None:
             from nakari.emotion.analyzer import EmotionAnalyzer
             from nakari.frontend_adapter.state_emitter import Live2DEmotion
-            import structlog
 
             log = structlog.get_logger("reply_tool")
             analyzer = EmotionAnalyzer()

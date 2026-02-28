@@ -150,7 +150,7 @@ async def run() -> None:
 
     # Register all tools
     register_mailbox_tools(registry, mailbox, loop_state, config)
-    register_reply_tool(registry, cli.print_reply, tts_player, multi_output_handler, state_emitter)
+    register_reply_tool(registry, cli.print_reply, tts_player, multi_output_handler, state_emitter, journal)
     register_memory_tools(registry, memory, llm)
     register_context_tools(registry, context, llm)
     register_asr_tools(registry, config)

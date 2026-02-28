@@ -135,6 +135,7 @@ class JournalStore:
         event_id: str | None = None,
     ) -> None:
         if not self._db or not self._session_id:
+            self._log.warning("log_message_skipped", has_db=self._db is not None, session_id=self._session_id)
             return
         await self._db.execute(
             "INSERT INTO messages (session_id, role, content, tool_calls, tool_call_id, event_id, created_at) "
@@ -150,6 +151,7 @@ class JournalStore:
             ),
         )
         await self._db.commit()
+        self._log.debug("message_logged", role=role, session_id=self._session_id, content_length=len(content) if content else 0)
 
     # ── Query methods (used by tools) ────────────────────────────
 

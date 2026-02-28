@@ -13,7 +13,7 @@ class LLMClient:
     def __init__(self, config: Config) -> None:
         # Configure timeout: 60s for connect, 120s for read, 10s for write
         # This prevents requests from hanging indefinitely
-        self._timeout = Timeout(60.0, 120.0, 10.0)
+        self._timeout = Timeout(60.0, connect=120.0, write=10.0)
         self._client = AsyncOpenAI(
             api_key=config.openai_api_key,
             base_url=config.openai_base_url,

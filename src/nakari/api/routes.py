@@ -34,6 +34,18 @@ class SessionTitleUpdate(BaseModel):
     title: str
 
 
+@router.get("/sessions/current")
+async def get_current_session(journal: JournalStore = Depends(get_journal)) -> dict:
+    """Get the current active session ID.
+
+    Returns:
+        Current session ID or null if no active session
+    """
+    return {
+        "session_id": journal.session_id,
+    }
+
+
 @router.get("/api/config")
 async def get_live2d_config(config: Live2DConfig = Depends(get_config)) -> dict:
     """Get Live2D configuration.
@@ -170,6 +182,7 @@ async def get_session(
         Session details with messages array
     """
     messages = await journal.read_session(session_id, limit=1000)
+    _log.info("session_messages_loaded", session_id=session_id, message_count=len(messages), messages=messages)
     # Get session metadata using the public method
     session = await journal.get_session_metadata(session_id)
     if not session:
