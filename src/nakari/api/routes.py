@@ -170,22 +170,13 @@ async def get_session(
         Session details with messages array
     """
     messages = await journal.read_session(session_id, limit=1000)
-    # Get session metadata
-    cursor = await journal._db.execute(  # type: ignore
-        "SELECT id, started_at, ended_at, title FROM sessions WHERE id = ?",
-        (session_id,),
-    )
-    row = await cursor.fetchone()
-    if not row:
+    # Get session metadata using the public method
+    session = await journal.get_session_metadata(session_id)
+    if not session:
         raise HTTPException(status_code=404, detail="Session not found")
 
     return {
-        "session": {
-            "id": row["id"],
-            "started_at": row["started_at"],
-            "ended_at": row["ended_at"],
-            "title": row["title"],
-        },
+        "session": session,
         "messages": messages,
     }
 
@@ -224,21 +215,12 @@ async def update_session(
     if "title" in updates:
         await journal.set_session_title(session_id, updates["title"])
 
-    # Fetch updated session
-    cursor = await journal._db.execute(  # type: ignore
-        "SELECT id, started_at, ended_at, title FROM sessions WHERE id = ?",
-        (session_id,),
-    )
-    row = await cursor.fetchone()
-    if not row:
+    # Fetch updated session using the public method
+    session = await journal.get_session_metadata(session_id)
+    if not session:
         raise HTTPException(status_code=404, detail="Session not found")
 
-    return {
-        "id": row["id"],
-        "started_at": row["started_at"],
-        "ended_at": row["ended_at"],
-        "title": row["title"],
-    }
+    return session
 
 
 @router.delete("/sessions/{session_id}")

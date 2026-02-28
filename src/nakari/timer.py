@@ -211,6 +211,9 @@ async def run_timer_loop(
             if consecutive_errors >= max_consecutive_errors:
                 log.warning("timer_loop_too_many_errors", sleep_seconds=60)
                 await asyncio.sleep(60)  # Wait longer if errors persist
+                # Reset error counter after long sleep to allow recovery
+                consecutive_errors = 0
+                log.info("timer_loop_error_count_reset_after_backoff")
                 continue
 
         # Standard sleep interval

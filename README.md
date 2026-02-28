@@ -74,6 +74,25 @@ npm run dev
 - 桌宠模式
 - 修复历史记录功能逻辑
 
+### v2.0.8 (2026-02-27)
+- **性能优化**：
+  - 优化 journal N+1查询问题（使用单次SQL查询替代循环）
+  - 优化 web_tools HTTP连接池（复用ClientSession减少TCP开销）
+  - 添加 LLM API超时配置（防止请求无限挂起）
+  - 优化 timer loop 错误恢复（长睡眠后重置错误计数器）
+  - 优化 API路由封装（添加get_session_metadata公共方法）
+- **Bug修复**：
+  - 修复 `wait_for_events` 竞态条件（优化循环结构防止信号丢失）
+  - 修复 WebSocket 回调异常丢失（添加任务跟踪和异常处理）
+  - 修复 `passive_compress` 潜在 KeyError（tc["id"] → tc.get("id")）
+  - 修复 LLM 空响应 IndexError（添加 choices 空数组检查）
+  - 修复环境变量 KeyError（OPENAI_API_KEY 添加清晰错误提示）
+  - 修复 WebSocket 客户端 ID 重复（改用 UUID 生成）
+  - 修复 metadata 更新未持久化（fields 添加 metadata 字段）
+  - 修复 TTS subprocess 清理不完整（kill 后添加 wait 超时保护）
+  - 修复 timer 输入验证（添加 datetime 格式异常处理）
+
+
 ### v2.0.7 (2026-02-27)
 - **Bug修复**：
   - 修复 `wait_for_events` 竞态条件（优化循环结构防止信号丢失）

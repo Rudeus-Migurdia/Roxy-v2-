@@ -156,25 +156,66 @@ class JournalStore:
     async def list_sessions(
         self, limit: int = 10, offset: int = 0
     ) -> list[dict[str, Any]]:
+        """List sessions with message count and title fallback (optimized with single query)."""
         assert self._db is not None
+        # Single query with LEFT JOIN to get first user message for title fallback
+        # This avoids N+1 query problem
         cursor = await self._db.execute(
-            "SELECT s.id, s.started_at, s.ended_at, s.title, "
-            "  (SELECT COUNT(*) FROM messages m WHERE m.session_id = s.id) AS message_count "
-            "FROM sessions s ORDER BY s.started_at DESC LIMIT ? OFFSET ?",
+            """SELECT s.id, s.started_at, s.ended_at, s.title,
+                      (SELECT COUNT(*) FROM messages m WHERE m.session_id = s.id) AS message_count,
+                      COALESCE(s.title,
+                          (SELECT substr(m.content, 1, 40)
+                           FROM messages m
+                           WHERE m.session_id = s.id AND m.role = 'user'
+                           ORDER BY m.id ASC LIMIT 1),
+                          '新对话') AS display_title
+               FROM sessions s
+               ORDER BY s.started_at DESC
+               LIMIT ? OFFSET ?""",
             (limit, offset),
         )
         rows = await cursor.fetchall()
         results = []
         for r in rows:
             row = dict(r)
-            # Generate title if not set
+            # Use the SQL-generated display_title, but still format it nicely
             if not row.get("title"):
-                row["title"] = await self._generate_session_title_fallback(row["id"])
+                display_title = row["display_title"]
+                if display_title and display_title != "新对话":
+                    # Format truncated title from SQL
+                    content = display_title.strip()
+                    content = ' '.join(content.split())
+                    if len(content) > 40:
+                        truncated = content[:37]
+                        last_space = truncated.rfind(' ')
+                        if last_space > 20:
+                            truncated = truncated[:last_space]
+                        row["title"] = truncated + "..."
+                    else:
+                        row["title"] = content
+                else:
+                    row["title"] = "新对话"
             results.append(row)
         return results
 
+    async def get_session_metadata(self, session_id: str) -> dict[str, Any] | None:
+        """Get session metadata (id, started_at, ended_at, title)."""
+        assert self._db is not None
+        cursor = await self._db.execute(
+            "SELECT id, started_at, ended_at, title FROM sessions WHERE id = ?",
+            (session_id,),
+        )
+        row = await cursor.fetchone()
+        if row:
+            return dict(row)
+        return None
+
     async def _generate_session_title_fallback(self, session_id: str) -> str:
-        """Generate title from first user message (fallback only)."""
+        """Generate title from first user message (fallback only).
+
+        NOTE: This method is kept for backward compatibility but is no longer
+        called by list_sessions due to N+1 query optimization.
+        """
         cursor = await self._db.execute(
             """SELECT content FROM messages
                WHERE session_id = ? AND role = 'user'
