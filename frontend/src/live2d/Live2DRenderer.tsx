@@ -555,8 +555,8 @@ export function setModelParams(model: any, params: Live2DParam[]): void {
   }
 
   // Log model structure once
-  console.log('[Live2D] internalModel has live2DModel:', !!internalModel.live2DModel);
-  console.log('[Live2D] internalModel has coreModel:', !!internalModel.coreModel);
+  debug.log('internalModel has live2DModel:', !!internalModel.live2DModel);
+  debug.log('internalModel has coreModel:', !!internalModel.coreModel);
 
   // Check if model has settings (Cubism 2.0)
   if (internalModel.settings) {
@@ -620,9 +620,9 @@ export function setModelParams(model: any, params: Live2DParam[]): void {
 }
 
 export function setModelEmotion(model: any, emotion: Emotion): void {
-  console.log('[Live2D] setModelEmotion called:', emotion);
+  debug.log('setModelEmotion called:', emotion);
   const params = EMOTION_PARAMS[emotion] || EMOTION_PARAMS.neutral;
-  console.log('[Live2D] Emotion params:', params);
+  debug.log('Emotion params:', params);
   setModelParams(model, params);
 }
 
@@ -643,6 +643,6 @@ export function triggerMotion(
       model.motionManager.startMotion(group, index, priority);
     }
   } catch (e) {
-    console.error('[Live2D] Failed to trigger motion:', group, index, e);
+    debug.error('Failed to trigger motion:', group, index, e);
   }
 }

@@ -3,6 +3,9 @@
  */
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
+import { createScopedLogger } from '../utils/debug';
+
+const debug = createScopedLogger('Settings');
 
 // Setting categories and their types
 export interface Live2DSettings {
@@ -183,7 +186,7 @@ const loadSettings = (): AppSettings => {
       }
     }
   } catch (error) {
-    console.warn('Failed to load settings from localStorage:', error);
+    debug.warn('Failed to load settings from localStorage:', error);
   }
   return defaultSettings;
 };
@@ -241,7 +244,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           localStorage.setItem(SETTINGS_STORAGE_KEY, currentSettingsJson);
           lastSavedSettingsRef.current = currentSettingsJson;
         } catch (error) {
-          console.error('Failed to save settings to localStorage:', error);
+          debug.error('Failed to save settings to localStorage:', error);
         }
       }, 1000);
     }
@@ -309,7 +312,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         return true;
       }
     } catch (error) {
-      console.error('Failed to import settings:', error);
+      debug.error('Failed to import settings:', error);
     }
     return false;
   }, []);

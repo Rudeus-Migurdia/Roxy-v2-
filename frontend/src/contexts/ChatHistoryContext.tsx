@@ -4,6 +4,9 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import type { ChatSession, DialogState } from '../types';
+import { createScopedLogger } from '../utils/debug';
+
+const debug = createScopedLogger('ChatHistory');
 
 // Storage keys
 const CURRENT_SESSION_KEY = 'nakari_current_session';
@@ -89,18 +92,18 @@ export function ChatHistoryProvider({ children }: ChatHistoryProviderProps) {
         const data = await fetchApi('/sessions/current');
         const backendSessionId = data.session_id;
         if (backendSessionId) {
-          console.log('[ChatHistory] Backend session ID:', backendSessionId);
+          debug.log('Backend session ID:', backendSessionId);
           setCurrentSessionId(backendSessionId);
         } else {
           // Fallback to localStorage if backend has no session
           const saved = localStorage.getItem(CURRENT_SESSION_KEY);
           if (saved) {
-            console.log('[ChatHistory] Using saved session ID:', saved);
+            debug.log('Using saved session ID:', saved);
             setCurrentSessionId(saved);
           }
         }
       } catch (err) {
-        console.error('[ChatHistory] Failed to fetch current session:', err);
+        debug.error('Failed to fetch current session:', err);
         // Fallback to localStorage
         const saved = localStorage.getItem(CURRENT_SESSION_KEY);
         if (saved) {
@@ -157,8 +160,8 @@ export function ChatHistoryProvider({ children }: ChatHistoryProviderProps) {
     setError(null);
     try {
       const data = await fetchApi(`/sessions/${sessionId}`);
-      console.log('[ChatHistory] Raw API response:', data);
-      console.log('[ChatHistory] Raw messages array:', data.messages);
+      debug.log('Raw API response:', data);
+      debug.log('Raw messages array:', data.messages);
       // Convert backend messages to DialogState format
       const messages: DialogState[] = (data.messages || [])
         .filter((m: { role: string; content: string | null }) => {
@@ -171,7 +174,7 @@ export function ChatHistoryProvider({ children }: ChatHistoryProviderProps) {
           if (m.role === 'assistant') {
             const hasContent = m.content && typeof m.content === 'string' && m.content.trim().length > 0;
             if (!hasContent) {
-              console.log('[ChatHistory] Skipping assistant message with no content:', m);
+              debug.log('Skipping assistant message with no content:', m);
               return false;
             }
           }
@@ -183,7 +186,7 @@ export function ChatHistoryProvider({ children }: ChatHistoryProviderProps) {
           isUser: m.role === 'user',
           timestamp: Math.floor(m.created_at * 1000),
         }));
-      console.log('[ChatHistory] Filtered messages:', messages.length, messages);
+      debug.log('Filtered messages:', messages.length, messages);
       return messages;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load session');

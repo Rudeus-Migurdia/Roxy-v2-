@@ -4,6 +4,9 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { getTranslations, type Language, type Translations, defaultLanguage } from '../i18n';
+import { createScopedLogger } from '../utils/debug';
+
+const debug = createScopedLogger('Language');
 
 interface LanguageContextType {
   language: Language;
@@ -27,7 +30,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         setLanguageState(stored as Language);
       }
     } catch (error) {
-      console.warn('Failed to load language from localStorage:', error);
+      debug.warn('Failed to load language from localStorage:', error);
     }
   }, []);
 
@@ -36,7 +39,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
     } catch (error) {
-      console.error('Failed to save language to localStorage:', error);
+      debug.error('Failed to save language to localStorage:', error);
     }
   }, [language]);
 
