@@ -27,6 +27,11 @@ class LoopState:
         self.current_event = None
         self.tool_call_count = 0
 
+    @property
+    def current_event_id(self) -> str | None:
+        """Get the current event ID, or None if no event is active."""
+        return self.current_event.id if self.current_event else None
+
 
 class ReactLoop:
     def __init__(
@@ -67,7 +72,7 @@ class ReactLoop:
                     await self._journal.log_message(
                         role="user",
                         content=error_msg,
-                        event_id=self._state.current_event.id if self._state.current_event else None,
+                        event_id=self._state.current_event_id,
                     )
                     await asyncio.sleep(1)
                     continue
@@ -94,12 +99,11 @@ class ReactLoop:
                     content=message.content,
                     tool_calls=tool_calls_raw,
                 )
-                event_id = self._state.current_event.id if self._state.current_event else None
                 await self._journal.log_message(
                     role="assistant",
                     content=message.content,
                     tool_calls=tool_calls_raw,
-                    event_id=event_id,
+                    event_id=self._state.current_event_id,
                 )
 
                 if message.tool_calls:
@@ -119,7 +123,7 @@ class ReactLoop:
                                     role="tool",
                                     content=f"BUDGET EXCEEDED: {self._state.tool_call_count}/{budget}",
                                     tool_call_id=tc.id,
-                                    event_id=self._state.current_event.id if self._state.current_event else None,
+                                    event_id=self._state.current_event_id,
                                 )
                                 continue
 
@@ -133,7 +137,7 @@ class ReactLoop:
                             role="tool",
                             content=result.output,
                             tool_call_id=tc.id,
-                            event_id=self._state.current_event.id if self._state.current_event else None,
+                            event_id=self._state.current_event_id,
                         )
                 else:
                     # LLM returned text without tool calls — nudge it
@@ -151,7 +155,7 @@ class ReactLoop:
                     await self._journal.log_message(
                         role="user",
                         content=nudge,
-                        event_id=self._state.current_event.id if self._state.current_event else None,
+                        event_id=self._state.current_event_id,
                     )
 
             except Exception as e:
@@ -161,6 +165,6 @@ class ReactLoop:
                 await self._journal.log_message(
                     role="user",
                     content=error_msg,
-                    event_id=self._state.current_event.id if self._state.current_event else None,
+                    event_id=self._state.current_event_id,
                 )
                 await asyncio.sleep(1)
