@@ -8,6 +8,9 @@ from nakari.models import Event, EventStatus
 
 
 class Mailbox:
+    # Maximum number of archived events to keep in memory
+    _MAX_ARCHIVE_SIZE = 1000
+
     def __init__(self) -> None:
         self._events: dict[str, Event] = {}
         self._archive: list[Event] = []
@@ -49,7 +52,13 @@ class Mailbox:
         event.status = EventStatus.COMPLETED
         self._events.pop(event.id, None)
         self._archive.append(event)
-        self._log.info("event_archived", event_id=event.id)
+        self._log.info("event_archived", event_id=event.id, archive_size=len(self._archive))
+
+        # Prevent unbounded memory growth: trim old archived events
+        if len(self._archive) > self._MAX_ARCHIVE_SIZE:
+            removed_count = len(self._archive) - self._MAX_ARCHIVE_SIZE
+            self._archive = self._archive[-self._MAX_ARCHIVE_SIZE:]
+            self._log.info("archive_trimmed", removed=removed_count, new_size=len(self._archive))
 
     async def wait_for_events(self) -> None:
         """Block until there is at least one PENDING event.
