@@ -94,8 +94,6 @@ class EmotionAnalyzer:
             "对不起",
             "抱歉",
             "不好意思",
-            "抱歉",
-            "难过",
             # English
             "sad",
             "sorry",

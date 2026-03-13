@@ -182,7 +182,7 @@ async def get_session(
         Session details with messages array
     """
     messages = await journal.read_session(session_id, limit=1000)
-    _log.info("session_messages_loaded", session_id=session_id, message_count=len(messages), messages=messages)
+    _log.info("session_messages_loaded", session_id=session_id, message_count=len(messages))
     # Get session metadata using the public method
     session = await journal.get_session_metadata(session_id)
     if not session:

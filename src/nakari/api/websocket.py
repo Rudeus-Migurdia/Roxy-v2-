@@ -179,7 +179,10 @@ class WebSocketManager:
         # Send to all target clients concurrently
         tasks = [self.send(client_id, message) for client_id in clients]
         if tasks:
-            await asyncio.gather(*tasks, return_exceptions=True)
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            failed_count = sum(1 for r in results if isinstance(r, Exception))
+            if failed_count > 0:
+                self._log.warning("broadcast_partial_failure", failed=failed_count, total=len(tasks))
 
         self._log.debug("broadcast", topic=topic, clients=len(clients))
 

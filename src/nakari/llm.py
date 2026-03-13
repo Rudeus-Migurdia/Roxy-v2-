@@ -12,8 +12,9 @@ from nakari.config import Config
 class LLMClient:
     def __init__(self, config: Config) -> None:
         # Configure timeout: 60s for connect, 120s for read, 10s for write
+        # Total timeout 300s as a safety net
         # This prevents requests from hanging indefinitely
-        self._timeout = Timeout(60.0, connect=120.0, write=10.0)
+        self._timeout = Timeout(timeout=300.0, connect=60.0, read=120.0, write=10.0)
         self._client = AsyncOpenAI(
             api_key=config.openai_api_key,
             base_url=config.openai_base_url,
