@@ -129,6 +129,9 @@ def create_app() -> FastAPI:
                 # Receive and process messages
                 data = await websocket.receive()
 
+                if data.get("type") == "websocket.disconnect":
+                    break
+
                 if "text" in data:
                     # Handle message through WebSocketInput adapter
                     if ws_input:

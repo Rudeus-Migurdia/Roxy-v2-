@@ -46,9 +46,22 @@ class WebSocketInput:
         """
         try:
             data = json.loads(message)
+            if not isinstance(data, dict):
+                self._log.warning("invalid_message_payload", payload_type=type(data).__name__)
+                return
+
             msg_type = data.get("type")
             # Support both "payload" (legacy) and "data" (new frontend) fields
-            payload = data.get("payload") or data.get("data") or {}
+            payload = data["payload"] if "payload" in data else data.get("data", {})
+            if payload is None:
+                payload = {}
+            if not isinstance(payload, dict):
+                self._log.warning(
+                    "invalid_message_payload",
+                    type=msg_type,
+                    payload_type=type(payload).__name__,
+                )
+                return
 
             if msg_type == "user_text":
                 await self._handle_user_text(payload)

@@ -29,18 +29,16 @@ export function LeftSidebar({
   // Batch deletion mode
   const [batchMode, setBatchMode] = useState(false);
   const [selectedSessions, setSelectedSessions] = useState<Set<string>>(new Set());
-  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressTriggeredRef = useRef(false);
+  const shouldShowText = !leftSidebarCollapsed && showText;
 
   useEffect(() => {
-    if (!leftSidebarCollapsed) {
-      const timer = setTimeout(() => {
-        setShowText(true);
-      }, 90);
-      return () => clearTimeout(timer);
-    } else {
-      setShowText(false);
-    }
+    const timer = setTimeout(
+      () => setShowText(!leftSidebarCollapsed),
+      leftSidebarCollapsed ? 0 : 90,
+    );
+    return () => clearTimeout(timer);
   }, [leftSidebarCollapsed]);
 
   // Load sessions on mount
@@ -105,7 +103,7 @@ export function LeftSidebar({
       });
       exitBatchMode();
     }
-  }, [selectedSessions, deleteSession, exitBatchMode, t.batchDeleteConfirm]);
+  }, [selectedSessions, deleteSession, exitBatchMode, t]);
 
   // Handle delete button click
   const handleDeleteClick = useCallback((e: React.MouseEvent, sessionId: string) => {
@@ -214,7 +212,7 @@ export function LeftSidebar({
             <line x1="4.93" y1="19.07" x2="7.76" y2="16.24" />
             <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" />
           </svg>
-          <span className="galgame-sidebar__text">{t.newChat}</span>
+          {shouldShowText && <span className="galgame-sidebar__text">{t.newChat}</span>}
         </button>
       </div>
 
@@ -280,7 +278,7 @@ export function LeftSidebar({
                   onClick={(e) => e.stopPropagation()}
                 />
               ) : (
-                <span className="galgame-sidebar__text">{session.title}</span>
+                shouldShowText && <span className="galgame-sidebar__text">{session.title}</span>
               )}
               <span className="galgame-sidebar__history-time">
                 {formatTime(session.started_at)}
@@ -306,7 +304,7 @@ export function LeftSidebar({
       <div className="galgame-sidebar__bottom">
         <button className="galgame-sidebar__bottom-item" onClick={onSettingsClick}>
           <span className="galgame-sidebar__bottom-icon">⚙</span>
-          <span className="galgame-sidebar__text">{t.settings}</span>
+          {shouldShowText && <span className="galgame-sidebar__text">{t.settings}</span>}
         </button>
       </div>
     </aside>
