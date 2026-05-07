@@ -298,16 +298,17 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     try {
       const parsed = JSON.parse(json);
       // Validate structure
-      if (parsed.live2d && parsed.audio && parsed.general && parsed.advanced) {
+      if (typeof parsed === 'object' && parsed !== null &&
+          parsed.live2d && parsed.audio && parsed.general && parsed.advanced) {
         // Normalize legacy p5r theme
         if (parsed.general?.theme) {
           parsed.general.theme = normalizeTheme(parsed.general.theme);
         }
         setSettings({
-          live2d: { ...defaultSettings.live2d, ...parsed.live2d },
-          audio: { ...defaultSettings.audio, ...parsed.audio },
-          general: { ...defaultSettings.general, ...parsed.general },
-          advanced: { ...defaultSettings.advanced, ...parsed.advanced },
+          live2d: validateLive2DSettings(parsed.live2d),
+          audio: validateAudioSettings(parsed.audio),
+          general: validateGeneralSettings(parsed.general),
+          advanced: validateAdvancedSettings(parsed.advanced),
         });
         return true;
       }

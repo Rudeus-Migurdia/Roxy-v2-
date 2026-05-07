@@ -41,6 +41,7 @@ export function useWebSocket(
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectAttemptsRef = useRef<number>(0);
   const sendMessageRef = useRef<((type: WSMessageType, data: unknown) => void) | null>(null);
+  const connectRef = useRef<(() => void) | null>(null);
   const latestOptionsRef = useRef<UseWebSocketOptions>(options);
   const urlRef = useRef<string>(url);
 
@@ -102,7 +103,7 @@ export function useWebSocket(
         }
       };
 
-      ws.onerror = (_error) => {
+      ws.onerror = () => {
         debug.error('WebSocket error occurred');
         setConnectionState('error');
         latestOptionsRef.current.onStateChange?.('error');
@@ -129,7 +130,7 @@ export function useWebSocket(
           latestOptionsRef.current.onStateChange?.('reconnecting');
 
           reconnectTimeoutRef.current = window.setTimeout(() => {
-            connect();
+            connectRef.current?.();
           }, backoffDelay);
         }
       };
@@ -193,7 +194,8 @@ export function useWebSocket(
   useEffect(() => {
     latestOptionsRef.current = options;
     sendMessageRef.current = sendMessage;
-  }, [options, sendMessage]);
+    connectRef.current = connect;
+  }, [options, sendMessage, connect]);
 
   // 组件卸载时清理
   useEffect(() => {
@@ -201,6 +203,7 @@ export function useWebSocket(
       disconnect();
       // 清理所有ref引用
       sendMessageRef.current = null;
+      connectRef.current = null;
       // 注意：不清除latestOptionsRef，因为它可能在其他地方使用
     };
   }, [disconnect]);

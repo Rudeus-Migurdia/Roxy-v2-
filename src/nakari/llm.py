@@ -45,9 +45,11 @@ class LLMClient:
                     messages=messages,
                     timeout=self._timeout,
                 )
+            finish_reason = response.choices[0].finish_reason if response.choices else None
             self._log.debug(
                 "llm_response",
-                finish_reason=response.choices[0].finish_reason,
+                choice_count=len(response.choices),
+                finish_reason=finish_reason,
             )
             return response
         except Exception as e:
@@ -61,6 +63,8 @@ class LLMClient:
                 input=text,
                 timeout=self._timeout,
             )
+            if not response.data:
+                raise RuntimeError("Embedding response contained no data")
             return response.data[0].embedding
         except Exception as e:
             self._log.error("llm_embed_failed", error=str(e))

@@ -2,7 +2,7 @@
  * ChatHistoryContext - Manages chat sessions and history
  */
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import type { ChatSession, DialogState } from '../types';
 import { createScopedLogger } from '../utils/debug';
 
@@ -51,6 +51,21 @@ interface ChatHistoryContextType {
 }
 
 const ChatHistoryContext = createContext<ChatHistoryContextType | null>(null);
+
+const readCachedSessions = (): ChatSession[] | null => {
+  try {
+    const cached = localStorage.getItem(SESSIONS_CACHE_KEY);
+    if (!cached) return null;
+
+    const parsed = JSON.parse(cached);
+    return Array.isArray(parsed) ? parsed : null;
+  } catch (err) {
+    debug.warn('Ignoring invalid sessions cache:', err);
+    localStorage.removeItem(SESSIONS_CACHE_KEY);
+    localStorage.removeItem(SESSIONS_CACHE_TIME_KEY);
+    return null;
+  }
+};
 
 export function useChatHistory(): ChatHistoryContextType {
   const context = useContext(ChatHistoryContext);
@@ -131,10 +146,11 @@ export function ChatHistoryProvider({ children }: ChatHistoryProviderProps) {
       // Try cache first
       const cachedTime = localStorage.getItem(SESSIONS_CACHE_TIME_KEY);
       const now = Date.now();
-      if (cachedTime && now - parseInt(cachedTime) < CACHE_TTL) {
-        const cached = localStorage.getItem(SESSIONS_CACHE_KEY);
-        if (cached) {
-          setSessions(JSON.parse(cached));
+      const cachedTimestamp = cachedTime ? Number(cachedTime) : Number.NaN;
+      if (Number.isFinite(cachedTimestamp) && now - cachedTimestamp < CACHE_TTL) {
+        const cachedSessions = readCachedSessions();
+        if (cachedSessions) {
+          setSessions(cachedSessions);
           setIsLoading(false);
           return;
         }
@@ -152,7 +168,7 @@ export function ChatHistoryProvider({ children }: ChatHistoryProviderProps) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [fetchApi]);
 
   // Load specific session messages
   const loadSession = useCallback(async (sessionId: string): Promise<DialogState[]> => {
@@ -194,7 +210,7 @@ export function ChatHistoryProvider({ children }: ChatHistoryProviderProps) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [fetchApi]);
 
   // Create new session
   const createSession = useCallback(async (): Promise<string> => {
@@ -209,13 +225,14 @@ export function ChatHistoryProvider({ children }: ChatHistoryProviderProps) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [fetchApi]);
 
   // Switch to a session
   const switchSession = useCallback(async (sessionId: string) => {
     setIsLoading(true);
     setError(null);
     try {
+      await fetchApi(`/sessions/${sessionId}/switch`, { method: 'POST' });
       setCurrentSessionId(sessionId);
       // Invalidate cache so we reload sessions
       localStorage.removeItem(SESSIONS_CACHE_KEY);
@@ -226,7 +243,7 @@ export function ChatHistoryProvider({ children }: ChatHistoryProviderProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [loadSessions]);
+  }, [fetchApi, loadSessions]);
 
   // Delete a session
   const deleteSession = useCallback(async (sessionId: string) => {
@@ -248,7 +265,7 @@ export function ChatHistoryProvider({ children }: ChatHistoryProviderProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [currentSessionId]);
+  }, [currentSessionId, fetchApi]);
 
   // Rename a session
   const renameSession = useCallback(async (sessionId: string, title: string) => {
@@ -271,7 +288,7 @@ export function ChatHistoryProvider({ children }: ChatHistoryProviderProps) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [fetchApi]);
 
   // Start new conversation (creates session and switches to it)
   const newConversation = useCallback(async () => {

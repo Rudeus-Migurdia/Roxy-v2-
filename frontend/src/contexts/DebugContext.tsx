@@ -2,7 +2,7 @@
  * DebugContext - Provides debug mode state to the entire app
  */
 
-import { createContext, useContext, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useEffect, type ReactNode } from 'react';
 import { setDebugMode } from '../utils/debug';
 
 interface DebugContextType {

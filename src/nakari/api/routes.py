@@ -46,7 +46,7 @@ async def get_current_session(journal: JournalStore = Depends(get_journal)) -> d
     }
 
 
-@router.get("/api/config")
+@router.get("/config")
 async def get_live2d_config(config: Live2DConfig = Depends(get_config)) -> dict:
     """Get Live2D configuration.
 
@@ -68,7 +68,7 @@ async def get_live2d_config(config: Live2DConfig = Depends(get_config)) -> dict:
     }
 
 
-@router.post("/api/config")
+@router.post("/config")
 async def update_live2d_config(
     updates: dict,
     config: Live2DConfig = Depends(get_config),
@@ -91,7 +91,7 @@ async def update_live2d_config(
     return await get_live2d_config(config)
 
 
-@router.get("/api/models")
+@router.get("/models")
 async def list_models(config: Live2DConfig = Depends(get_config)) -> dict:
     """List available Live2D models.
 
@@ -109,7 +109,7 @@ async def list_models(config: Live2DConfig = Depends(get_config)) -> dict:
     }
 
 
-@router.get("/api/emotions")
+@router.get("/emotions")
 async def list_emotions() -> dict:
     """List available emotions.
 
@@ -127,7 +127,7 @@ async def list_emotions() -> dict:
     return {"emotions": emotions}
 
 
-@router.get("/api/motions")
+@router.get("/motions")
 async def list_motions() -> dict:
     """List available motions.
 
@@ -210,6 +210,27 @@ async def create_session(
     }
 
 
+@router.post("/sessions/{session_id}/switch")
+async def switch_session(
+    session_id: str,
+    journal: JournalStore = Depends(get_journal),
+) -> dict:
+    """Switch the active journal session.
+
+    Args:
+        session_id: The session ID to make active
+
+    Returns:
+        Current active session ID
+    """
+    try:
+        await journal.switch_session(session_id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Session not found") from None
+
+    return {"session_id": journal.session_id}
+
+
 @router.put("/sessions/{session_id}")
 async def update_session(
     session_id: str,
@@ -226,7 +247,9 @@ async def update_session(
         Updated session object
     """
     if "title" in updates:
-        await journal.set_session_title(session_id, updates["title"])
+        updated = await journal.set_session_title(session_id, updates["title"])
+        if not updated:
+            raise HTTPException(status_code=404, detail="Session not found")
 
     # Fetch updated session using the public method
     session = await journal.get_session_metadata(session_id)
@@ -249,7 +272,9 @@ async def delete_session(
     Returns:
         Success confirmation
     """
-    await journal.delete_session(session_id)
+    deleted = await journal.delete_session(session_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Session not found")
     return {"success": True}
 
 
@@ -268,5 +293,7 @@ async def set_session_title(
     Returns:
         Updated session ID and title
     """
-    await journal.set_session_title(session_id, title_data.title)
+    updated = await journal.set_session_title(session_id, title_data.title)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Session not found")
     return {"session_id": session_id, "title": title_data.title}

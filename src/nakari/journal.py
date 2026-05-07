@@ -54,6 +54,7 @@ class JournalStore:
         path.parent.mkdir(parents=True, exist_ok=True)
         self._db = await aiosqlite.connect(str(path))
         self._db.row_factory = aiosqlite.Row
+        await self._db.execute("PRAGMA foreign_keys = ON")
         await self._db.executescript(_SCHEMA)
         await self._db.commit()
         # Migration: add title column for existing databases
@@ -74,6 +75,12 @@ class JournalStore:
 
     async def switch_session(self, session_id: str) -> None:
         """Switch to an existing session without creating a new one."""
+        assert self._db is not None
+
+        if self._session_id == session_id:
+            self._log.info("session_switch_skipped", session_id=session_id)
+            return
+
         # Verify session exists
         cursor = await self._db.execute(
             "SELECT id FROM sessions WHERE id = ?",
@@ -101,10 +108,18 @@ class JournalStore:
                 self._session_id = None
 
         self._session_id = session_id
+        await self._db.execute(
+            "UPDATE sessions SET ended_at = NULL WHERE id = ?",
+            (session_id,),
+        )
+        await self._db.commit()
         self._log.info("session_switched", session_id=session_id)
 
     async def start_session(self) -> str:
         assert self._db is not None
+        if self._session_id:
+            await self.end_session()
+
         sid = uuid.uuid4().hex[:12]
         await self._db.execute(
             "INSERT INTO sessions (id, started_at) VALUES (?, ?)",
@@ -241,15 +256,19 @@ class JournalStore:
             return content
         return f"新对话"
 
-    async def set_session_title(self, session_id: str, title: str) -> None:
+    async def set_session_title(self, session_id: str, title: str) -> bool:
         """Set or update session title."""
         assert self._db is not None
-        await self._db.execute(
+        cursor = await self._db.execute(
             "UPDATE sessions SET title = ? WHERE id = ?",
             (title, session_id),
         )
         await self._db.commit()
+        updated = cursor.rowcount > 0
+        if not updated:
+            return False
         self._log.info("session_title_set", session_id=session_id, title=title)
+        return True
 
     async def get_session_title(self, session_id: str) -> str | None:
         """Get session title from DB or None if not set."""
@@ -263,7 +282,7 @@ class JournalStore:
             return row["title"]
         return None
 
-    async def delete_session(self, session_id: str) -> None:
+    async def delete_session(self, session_id: str) -> bool:
         """Delete a session and all its messages."""
         assert self._db is not None
         # Delete messages first (foreign key)
@@ -272,12 +291,18 @@ class JournalStore:
             (session_id,),
         )
         # Delete session
-        await self._db.execute(
+        cursor = await self._db.execute(
             "DELETE FROM sessions WHERE id = ?",
             (session_id,),
         )
         await self._db.commit()
+        deleted = cursor.rowcount > 0
+        if not deleted:
+            return False
+        if self._session_id == session_id:
+            self._session_id = None
         self._log.info("session_deleted", session_id=session_id)
+        return True
 
     async def read_session(
         self, session_id: str, limit: int = 50, offset: int = 0
